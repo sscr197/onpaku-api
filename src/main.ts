@@ -1,10 +1,44 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
+import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
+import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { CustomLogger } from './shared/logger/custom.logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
 
+  // カスタムロガーを設定
+  const logger = app.get(CustomLogger);
+  app.useLogger(logger);
+
+  // 開発環境の場合はデバッグログを有効化
+  if (process.env.NODE_ENV !== 'production') {
+    logger.setLogLevels(['debug', 'verbose', 'log', 'warn', 'error']);
+  } else {
+    // 本番環境では重要なログのみ
+    logger.setLogLevels(['log', 'warn', 'error']);
+  }
+
+  // バリデーションパイプをグローバルに設定
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+
+  // エラーフィルターをグローバルに設定
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // ロギングインターセプターをグローバルに設定
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
+  // Swagger設定
   const config = new DocumentBuilder()
     .setTitle('Onpaku API')
     .setDescription('オンパクアプリケーションのAPI仕様書')
@@ -15,6 +49,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  logger.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap();
