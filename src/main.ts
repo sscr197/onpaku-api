@@ -12,7 +12,7 @@ async function bootstrap() {
   });
 
   // カスタムロガーを設定
-  const logger = app.get(CustomLogger);
+  const logger = await app.resolve(CustomLogger);
   app.useLogger(logger);
 
   // 開発環境の場合はデバッグログを有効化
