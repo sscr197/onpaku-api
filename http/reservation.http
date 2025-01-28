@@ -1,0 +1,21 @@
+### 環境変数
+@baseUrl = http://localhost:3000/api/v1/onpaku
+@apiKey = MY_SECRET_KEY_1234
+
+### 予約登録
+POST {{baseUrl}}/reservation
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "reservation_id": "reservation123",
+  "user_id": "user123",
+  "execution": {
+    "id": "execution123",
+    "program_id": "program123",
+    "start_time": "2024-02-01T10:00:00+09:00",
+    "end_time": "2024-02-01T12:00:00+09:00",
+    "capacity": 10,
+    "price": 5000
+  }
+} 
