@@ -12,7 +12,7 @@ import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Reservations')
 @ApiBearerAuth()
-@Controller('api/v1/onpaku/reservations')
+@Controller('api/v1/onpaku/reservation')
 @UseGuards(ApiKeyGuard)
 export class ReservationsController {
   constructor(
