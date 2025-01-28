@@ -1,0 +1,28 @@
+services:
+  # api:
+  #   build:
+  #     context: ./api
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./api:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - FIRESTORE_EMULATOR_HOST=firestore:8080
+  #   depends_on:
+  #     - firestore
+
+  firestore:
+    build: 
+      context: ./firestore
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"  # Firestore
+      - "4000:4000"  # UI
+      - "5005:5005"  # WebSocket
+    volumes:
+      - firestore_data:/firestore
+
+volumes:
+  firestore_data:
