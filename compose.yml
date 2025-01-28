@@ -1,28 +1,37 @@
 services:
-  # api:
-  #   build:
-  #     context: ./api
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./api:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - FIRESTORE_EMULATOR_HOST=firestore:8080
-  #   depends_on:
-  #     - firestore
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '${PORT:-3000}:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3000}
+      - API_KEY=${API_KEY}
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-demo-project}
+      - FIRESTORE_CLIENT_EMAIL=${FIRESTORE_CLIENT_EMAIL}
+      - FIRESTORE_PRIVATE_KEY=${FIRESTORE_PRIVATE_KEY}
+      - APP_NAME=${APP_NAME:-onpaku-api}
+    depends_on:
+      - firestore
 
   firestore:
-    build: 
+    build:
       context: ./firestore
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"  # Firestore
-      - "4000:4000"  # UI
-      - "5005:5005"  # WebSocket
+      - '8080:8080' # Firestore
+      - '4000:4000' # UI
+      - '5005:5005' # WebSocket
     volumes:
       - firestore_data:/firestore
+    environment:
+      - FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-demo-project}
 
 volumes:
   firestore_data:

@@ -1,5 +1,11 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, IsString, validateSync } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  validateSync,
+} from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -18,7 +24,19 @@ class EnvironmentVariables {
   API_KEY: string;
 
   @IsString()
-  FIRESTORE_EMULATOR_HOST: string;
+  @IsOptional()
+  FIRESTORE_EMULATOR_HOST?: string;
+
+  @IsString()
+  FIRESTORE_PROJECT_ID: string;
+
+  @IsString()
+  @IsOptional()
+  FIRESTORE_CLIENT_EMAIL?: string;
+
+  @IsString()
+  @IsOptional()
+  FIRESTORE_PRIVATE_KEY?: string;
 
   @IsString()
   APP_NAME: string;
