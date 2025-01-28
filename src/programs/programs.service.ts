@@ -35,7 +35,10 @@ export class ProgramsService {
           prefecture: dto.program.prefecture,
           address: dto.program.address,
           street: dto.program.street,
-          partnerUsers: dto.partner_users,
+          partnerUsers: dto.partner_users.map((partner) => ({
+            email: partner.email,
+            role: partner.role,
+          })),
           updatedAt: new Date(),
         },
         { merge: true },
