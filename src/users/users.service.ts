@@ -17,12 +17,13 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto): Promise<void> {
     this.logger.debug(`Creating user with email: ${dto.email}`);
-    const userRef = this.firestore
-      .getFirestore()
-      .collection('users')
-      .doc(dto.email);
 
     try {
+      const userRef = this.firestore
+        .getFirestore()
+        .collection('users')
+        .doc(dto.email);
+
       await userRef.set({
         onpakuUserId: dto.id,
         familyName: dto.family_name,
@@ -61,12 +62,13 @@ export class UsersService {
 
   async updateUser(dto: UpdateUserDto): Promise<void> {
     this.logger.debug(`Updating user with email: ${dto.email}`);
-    const userRef = this.firestore
-      .getFirestore()
-      .collection('users')
-      .doc(dto.email);
 
     try {
+      const userRef = this.firestore
+        .getFirestore()
+        .collection('users')
+        .doc(dto.email);
+
       const updateData: any = {};
       if (dto.family_name) updateData.familyName = dto.family_name;
       if (dto.first_name) updateData.firstName = dto.first_name;

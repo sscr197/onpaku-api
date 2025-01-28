@@ -16,12 +16,13 @@ export class ProgramsService {
 
   async createOrUpdateProgram(dto: CreateProgramDto): Promise<void> {
     this.logger.debug(`Creating/Updating program: ${dto.program.id}`);
-    const programRef = this.firestore
-      .getFirestore()
-      .collection('programs')
-      .doc(dto.program.id);
 
     try {
+      const programRef = this.firestore
+        .getFirestore()
+        .collection('programs')
+        .doc(dto.program.id);
+
       await programRef.set(
         {
           title: dto.program.title,

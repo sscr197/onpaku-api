@@ -1,35 +1,37 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { CustomLogger } from '../shared/logger/custom.logger';
 
 @Injectable()
 export class ReservationsService {
-  private readonly logger = new Logger(ReservationsService.name);
-
   constructor(
     private readonly firestore: FirestoreProvider,
     private readonly vcsService: VcsService,
-  ) {}
+    private readonly logger: CustomLogger,
+  ) {
+    this.logger.setContext(ReservationsService.name);
+  }
 
   async createReservation(dto: CreateReservationDto): Promise<void> {
     this.logger.debug(`Creating reservation for user: ${dto.user_id}`);
 
-    // ユーザーのメールアドレスを取得
-    const userDoc = await this.firestore
-      .getFirestore()
-      .collection('users')
-      .where('onpakuUserId', '==', dto.user_id)
-      .get();
-
-    if (userDoc.empty) {
-      this.logger.error(`User not found: ${dto.user_id}`);
-      throw new NotFoundException(`User with ID ${dto.user_id} not found`);
-    }
-
-    const userEmail = userDoc.docs[0].id;
-
     try {
+      // ユーザーのメールアドレスを取得
+      const userDoc = await this.firestore
+        .getFirestore()
+        .collection('users')
+        .where('onpakuUserId', '==', dto.user_id)
+        .get();
+
+      if (userDoc.empty) {
+        this.logger.error(`User not found: ${dto.user_id}`);
+        throw new NotFoundException(`User with ID ${dto.user_id} not found`);
+      }
+
+      const userEmail = userDoc.docs[0].id;
+
       // 予約情報を保存
       const reservationRef = this.firestore
         .getFirestore()
@@ -64,6 +66,9 @@ export class ReservationsService {
         `Event VC created for reservation: ${dto.reservation_id}`,
       );
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       this.logger.error(
         `Failed to create reservation: ${error.message}`,
         error.stack,

@@ -8,13 +8,19 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Programs')
 @ApiBearerAuth()
 @Controller('api/v1/onpaku/program')
 @UseGuards(ApiKeyGuard)
 export class ProgramsController {
-  constructor(private readonly programsService: ProgramsService) {}
+  constructor(
+    private readonly programsService: ProgramsService,
+    private readonly logger: CustomLogger,
+  ) {
+    this.logger.setContext(ProgramsController.name);
+  }
 
   @Post()
   @ApiOperation({ summary: 'プログラム登録・更新' })
@@ -24,6 +30,17 @@ export class ProgramsController {
   async createOrUpdateProgram(
     @Body() createProgramDto: CreateProgramDto,
   ): Promise<void> {
-    await this.programsService.createOrUpdateProgram(createProgramDto);
+    this.logger.debug(
+      `Received request to create/update program: ${createProgramDto.program.id}`,
+    );
+    try {
+      await this.programsService.createOrUpdateProgram(createProgramDto);
+    } catch (error) {
+      this.logger.error(
+        `Failed to create/update program: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

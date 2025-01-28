@@ -8,13 +8,19 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Reservations')
 @ApiBearerAuth()
-@Controller('api/v1/onpaku/reservation')
+@Controller('api/v1/onpaku/reservations')
 @UseGuards(ApiKeyGuard)
 export class ReservationsController {
-  constructor(private readonly reservationsService: ReservationsService) {}
+  constructor(
+    private readonly reservationsService: ReservationsService,
+    private readonly logger: CustomLogger,
+  ) {
+    this.logger.setContext(ReservationsController.name);
+  }
 
   @Post()
   @ApiOperation({ summary: '予約登録' })
@@ -25,6 +31,17 @@ export class ReservationsController {
   async createReservation(
     @Body() createReservationDto: CreateReservationDto,
   ): Promise<void> {
-    await this.reservationsService.createReservation(createReservationDto);
+    this.logger.debug(
+      `Received request to create reservation: ${createReservationDto.reservation_id}`,
+    );
+    try {
+      await this.reservationsService.createReservation(createReservationDto);
+    } catch (error) {
+      this.logger.error(
+        `Failed to create reservation: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

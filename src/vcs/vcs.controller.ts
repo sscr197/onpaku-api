@@ -16,13 +16,19 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('VCs')
 @ApiBearerAuth()
 @Controller('api/v1/onpaku/vcs')
 @UseGuards(ApiKeyGuard)
 export class VcsController {
-  constructor(private readonly vcsService: VcsService) {}
+  constructor(
+    private readonly vcsService: VcsService,
+    private readonly logger: CustomLogger,
+  ) {
+    this.logger.setContext(VcsController.name);
+  }
 
   @Get('pending')
   @ApiOperation({ summary: 'メールアドレスに紐づくPending状態のVC一覧を取得' })
@@ -38,7 +44,18 @@ export class VcsController {
       throw new BadRequestException('Email is required');
     }
 
-    return this.vcsService.getPendingVCsByEmail(email);
+    this.logger.debug(
+      `Received request to get pending VCs for email: ${email}`,
+    );
+    try {
+      return await this.vcsService.getPendingVCsByEmail(email);
+    } catch (error) {
+      this.logger.error(
+        `Failed to get pending VCs: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 
   @Patch(':vcId/activate')
@@ -50,7 +67,13 @@ export class VcsController {
     if (!vcId) {
       throw new BadRequestException('VC ID is required');
     }
-    await this.vcsService.activateVC(vcId);
+    this.logger.debug(`Received request to activate VC: ${vcId}`);
+    try {
+      await this.vcsService.activateVC(vcId);
+    } catch (error) {
+      this.logger.error(`Failed to activate VC: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Patch(':vcId/revoke')
@@ -62,6 +85,12 @@ export class VcsController {
     if (!vcId) {
       throw new BadRequestException('VC ID is required');
     }
-    await this.vcsService.revokeVC(vcId);
+    this.logger.debug(`Received request to revoke VC: ${vcId}`);
+    try {
+      await this.vcsService.revokeVC(vcId);
+    } catch (error) {
+      this.logger.error(`Failed to revoke VC: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 }
