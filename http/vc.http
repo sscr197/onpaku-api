@@ -1,0 +1,15 @@
+### 環境変数
+@baseUrl = http://localhost:3000/api/v1/onpaku
+@apiKey = MY_SECRET_KEY_1234
+
+### メールアドレスに紐づくPending状態のVC一覧を取得
+GET {{baseUrl}}/vcs/pending?email=test@example.com
+Authorization: Bearer {{apiKey}}
+
+### VCをアクティベート
+PATCH {{baseUrl}}/vcs/user_test@example.com/activate
+Authorization: Bearer {{apiKey}}
+
+### VCを無効化
+PATCH {{baseUrl}}/vcs/user_test@example.com/revoke
+Authorization: Bearer {{apiKey}} 

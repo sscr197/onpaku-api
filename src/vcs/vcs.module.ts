@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { VcsController } from './vcs.controller';
 import { VcsService } from './vcs.service';
+import { VcsController } from './vcs.controller';
+import { FirestoreModule } from '../shared/firestore/firestore.module';
 
 @Module({
+  imports: [FirestoreModule],
+  providers: [VcsService],
   controllers: [VcsController],
-  providers: [VcsService]
+  exports: [VcsService],
 })
 export class VcsModule {}
