@@ -7,6 +7,7 @@ import { VcsModule } from './vcs/vcs.module';
 import { FirestoreModule } from './shared/firestore/firestore.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { LoggerModule } from './shared/logger/logger.module';
+import { ProgramsModule } from './programs/programs.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LoggerModule } from './shared/logger/logger.module';
     UsersModule,
     VcsModule,
     ReservationsModule,
+    ProgramsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
