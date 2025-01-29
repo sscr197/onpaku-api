@@ -15,7 +15,7 @@
 1. リポジトリをクローン
 
 ```bash
-git clone [repository-url]
+git clone git@github.com:sscr197/onpaku-api.git
 cd onpaku-api
 ```
 
