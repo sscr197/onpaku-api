@@ -97,7 +97,7 @@ describe('Programs (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(createProgramDto)
         .expect(201)
         .expect(() => {
@@ -132,7 +132,7 @@ describe('Programs (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(invalidDto)
         .expect(400);
     });
@@ -167,7 +167,7 @@ describe('Programs (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(createProgramDto)
         .expect(500);
     });

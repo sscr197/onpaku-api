@@ -88,7 +88,7 @@ describe('Users (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(createUserDto)
         .expect(201)
         .expect(() => {
@@ -137,7 +137,7 @@ describe('Users (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(invalidDto)
         .expect(400);
     });
@@ -168,7 +168,7 @@ describe('Users (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(updateUserDto)
         .expect(200)
         .expect(() => {
@@ -200,7 +200,7 @@ describe('Users (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(updateUserDto)
         .expect(404);
     });

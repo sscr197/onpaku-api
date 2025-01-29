@@ -126,7 +126,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(payload)
         .expect(201);
 
@@ -140,7 +140,7 @@ describe('IntegrationE2E', () => {
       // VCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.A.email })
         .expect(200);
 
@@ -168,7 +168,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(createProgramDto)
         .expect(201);
 
@@ -182,7 +182,7 @@ describe('IntegrationE2E', () => {
       // パートナーVCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.A.email })
         .expect(200);
 
@@ -209,7 +209,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(createProgramDto)
         .expect(201);
 
@@ -228,7 +228,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(payload)
         .expect(201);
 
@@ -242,7 +242,7 @@ describe('IntegrationE2E', () => {
       // VCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.B.email })
         .expect(200);
 
@@ -271,14 +271,14 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .patch('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(payload)
         .expect(200);
 
       // パートナーVCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.B.email })
         .expect(200);
 
@@ -305,7 +305,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/users')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(payload)
         .expect(201);
 
@@ -319,7 +319,7 @@ describe('IntegrationE2E', () => {
       // VCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -351,7 +351,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/reservations')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(payload)
         .expect(201);
 
@@ -365,7 +365,7 @@ describe('IntegrationE2E', () => {
       // イベントVCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -401,7 +401,7 @@ describe('IntegrationE2E', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/onpaku/reservations')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(payload)
         .expect(201);
 
@@ -415,7 +415,7 @@ describe('IntegrationE2E', () => {
       // イベントVCの確認
       const resVC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -442,7 +442,7 @@ describe('IntegrationE2E', () => {
       // ユーザーAのVC確認
       const resA = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.A.email })
         .expect(200);
 
@@ -463,7 +463,7 @@ describe('IntegrationE2E', () => {
       // ユーザーBのVC確認
       const resB = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.B.email })
         .expect(200);
 
@@ -484,7 +484,7 @@ describe('IntegrationE2E', () => {
       // ユーザーCのVC確認
       const resC = await request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 

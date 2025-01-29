@@ -79,7 +79,7 @@ describe('Reservations (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/reservations')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(createReservationDto)
         .expect(201)
         .expect(() => {
@@ -106,7 +106,7 @@ describe('Reservations (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/reservations')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send(invalidDto)
         .expect(400);
     });

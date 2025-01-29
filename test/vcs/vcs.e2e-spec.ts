@@ -69,7 +69,7 @@ describe('VCs (e2e)', () => {
       return request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
         .query({ email })
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .expect(200)
         .expect((res) => {
           expect(res.body).toEqual(
@@ -87,7 +87,7 @@ describe('VCs (e2e)', () => {
     it('should return 400 when email is missing', () => {
       return request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .expect(400);
     });
 
@@ -100,7 +100,7 @@ describe('VCs (e2e)', () => {
       return request(app.getHttpServer())
         .get('/api/v1/onpaku/vcs/pending')
         .query({ email: 'nonexistent@example.com' })
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .expect(200)
         .expect((res) => {
           expect(res.body).toEqual([]);
@@ -114,7 +114,7 @@ describe('VCs (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/vcs/activate')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send({ vcId })
         .expect(200);
     });
@@ -122,7 +122,7 @@ describe('VCs (e2e)', () => {
     it('should return 400 when vcId is missing', () => {
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/vcs/activate')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send({})
         .expect(400);
     });
@@ -134,7 +134,7 @@ describe('VCs (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/vcs/revoke')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send({ vcId })
         .expect(200);
     });
@@ -142,7 +142,7 @@ describe('VCs (e2e)', () => {
     it('should return 400 when vcId is missing', () => {
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/vcs/revoke')
-        .set('Authorization', 'Bearer onpaku-api')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
         .send({})
         .expect(400);
     });

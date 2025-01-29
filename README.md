@@ -103,5 +103,5 @@ http://localhost:3000/api/v1/onpaku
 全てのAPIリクエストには`Authorization`ヘッダーにAPIキーを含める必要があります：
 
 ```
-Authorization: Bearer onpaku-api
+Authorization: Bearer ${process.env.API_KEY}
 ```
