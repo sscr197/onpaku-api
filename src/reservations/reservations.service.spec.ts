@@ -4,7 +4,6 @@ import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CustomLogger } from '../shared/logger/custom.logger';
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { NotFoundException } from '@nestjs/common';
 
 describe('ReservationsService', () => {
   let service: ReservationsService;
@@ -16,16 +15,8 @@ describe('ReservationsService', () => {
     set: jest.fn().mockResolvedValue(undefined),
   };
 
-  const whereMock = {
-    get: jest.fn().mockResolvedValue({
-      empty: false,
-      docs: [{ id: 'test@example.com' }],
-    }),
-  };
-
   const collectionMock = {
     doc: jest.fn().mockReturnValue(docMock),
-    where: jest.fn().mockReturnValue(whereMock),
   };
 
   beforeEach(async () => {
@@ -81,7 +72,7 @@ describe('ReservationsService', () => {
     it('should create a reservation and event VC successfully', async () => {
       const createReservationDto: CreateReservationDto = {
         reservation_id: 'reservation1',
-        user_id: 'user1',
+        email: 'user1@example.com',
         execution: {
           id: 'execution1',
           program_id: 'program1',
@@ -91,56 +82,42 @@ describe('ReservationsService', () => {
           price: 1000,
         },
       };
-
-      whereMock.get.mockResolvedValueOnce({
-        empty: false,
-        docs: [{ id: 'test@example.com' }],
-      });
 
       await service.createReservation(createReservationDto);
 
       expect(firestoreMock.getFirestore).toHaveBeenCalled();
-      expect(collectionMock.doc).toHaveBeenCalled();
-      expect(collectionMock.where).toHaveBeenCalled();
-      expect(whereMock.get).toHaveBeenCalled();
-      expect(vcsServiceMock.createEventVC).toHaveBeenCalled();
-      expect(loggerMock.debug).toHaveBeenCalledWith(
-        `Creating reservation for user: ${createReservationDto.user_id}`,
+      expect(collectionMock.doc).toHaveBeenCalledWith(
+        createReservationDto.reservation_id,
       );
-    });
-
-    it('should throw NotFoundException when user is not found', async () => {
-      const createReservationDto: CreateReservationDto = {
-        reservation_id: 'reservation1',
-        user_id: 'user1',
-        execution: {
-          id: 'execution1',
-          program_id: 'program1',
-          start_time: '2024-04-01T10:00:00Z',
-          end_time: '2024-04-01T12:00:00Z',
-          capacity: 10,
-          price: 1000,
-        },
-      };
-
-      whereMock.get.mockResolvedValueOnce({
-        empty: true,
-        docs: [],
+      expect(docMock.set).toHaveBeenCalledWith({
+        userEmail: createReservationDto.email,
+        executionId: createReservationDto.execution.id,
+        programId: createReservationDto.execution.program_id,
+        startTime: expect.any(Date),
+        endTime: expect.any(Date),
+        capacity: createReservationDto.execution.capacity,
+        price: createReservationDto.execution.price,
+        createdAt: expect.any(Date),
       });
-
-      await expect(
-        service.createReservation(createReservationDto),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(loggerMock.error).toHaveBeenCalledWith(
-        `User not found: ${createReservationDto.user_id}`,
+      expect(vcsServiceMock.createEventVC).toHaveBeenCalledWith(
+        createReservationDto.email,
+        {
+          reservationId: createReservationDto.reservation_id,
+          programId: createReservationDto.execution.program_id,
+          startTime: createReservationDto.execution.start_time,
+          endTime: createReservationDto.execution.end_time,
+          price: createReservationDto.execution.price,
+        },
+      );
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        `Creating reservation for user: ${createReservationDto.email}`,
       );
     });
 
     it('should handle errors when creating reservation', async () => {
       const createReservationDto: CreateReservationDto = {
         reservation_id: 'reservation1',
-        user_id: 'user1',
+        email: 'user1@example.com',
         execution: {
           id: 'execution1',
           program_id: 'program1',
@@ -150,11 +127,6 @@ describe('ReservationsService', () => {
           price: 1000,
         },
       };
-
-      whereMock.get.mockResolvedValueOnce({
-        empty: false,
-        docs: [{ id: 'test@example.com' }],
-      });
 
       const error = new Error('Firestore error');
       docMock.set.mockRejectedValueOnce(error);

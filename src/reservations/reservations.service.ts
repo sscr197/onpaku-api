@@ -15,23 +15,9 @@ export class ReservationsService {
   }
 
   async createReservation(dto: CreateReservationDto): Promise<void> {
-    this.logger.debug(`Creating reservation for user: ${dto.user_id}`);
+    this.logger.debug(`Creating reservation for user: ${dto.email}`);
 
     try {
-      // ユーザーのメールアドレスを取得
-      const userDoc = await this.firestore
-        .getFirestore()
-        .collection('users')
-        .where('onpakuUserId', '==', dto.user_id)
-        .get();
-
-      if (userDoc.empty) {
-        this.logger.error(`User not found: ${dto.user_id}`);
-        throw new NotFoundException(`User with ID ${dto.user_id} not found`);
-      }
-
-      const userEmail = userDoc.docs[0].id;
-
       // 予約情報を保存
       const reservationRef = this.firestore
         .getFirestore()
@@ -39,7 +25,7 @@ export class ReservationsService {
         .doc(dto.reservation_id);
 
       await reservationRef.set({
-        userEmail,
+        userEmail: dto.email,
         executionId: dto.execution.id,
         programId: dto.execution.program_id,
         startTime: new Date(dto.execution.start_time),
@@ -50,11 +36,11 @@ export class ReservationsService {
       });
 
       this.logger.debug(
-        `Reservation created: ${dto.reservation_id} for user: ${userEmail}`,
+        `Reservation created: ${dto.reservation_id} for user: ${dto.email}`,
       );
 
       // イベントVCを作成
-      await this.vcsService.createEventVC(userEmail, {
+      await this.vcsService.createEventVC(dto.email, {
         reservationId: dto.reservation_id,
         programId: dto.execution.program_id,
         startTime: dto.execution.start_time,

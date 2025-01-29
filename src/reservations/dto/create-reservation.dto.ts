@@ -79,12 +79,12 @@ export class CreateReservationDto {
   reservation_id: string;
 
   @ApiProperty({
-    description: 'ユーザーID',
-    example: 'user123',
+    description: 'ユーザーのメールアドレス',
+    example: 'user1@example.com',
     required: true,
   })
   @IsString()
-  user_id: string;
+  email: string;
 
   @ApiProperty({
     description: '実施回情報',

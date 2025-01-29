@@ -338,7 +338,7 @@ describe('IntegrationE2E', () => {
       const reservationId = 'reservation-a-123';
       const payload: CreateReservationDto = {
         reservation_id: reservationId,
-        user_id: TEST_USERS.C.id,
+        email: TEST_USERS.C.email,
         execution: {
           id: 'exec-a-1',
           program_id: TEST_PROGRAMS.A.id,
@@ -388,7 +388,7 @@ describe('IntegrationE2E', () => {
       const reservationId = 'reservation-b-456';
       const payload: CreateReservationDto = {
         reservation_id: reservationId,
-        user_id: TEST_USERS.C.id,
+        email: TEST_USERS.C.email,
         execution: {
           id: 'exec-b-1',
           program_id: TEST_PROGRAMS.B.id,

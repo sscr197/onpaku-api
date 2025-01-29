@@ -3,7 +3,12 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { FirestoreProvider } from '../../src/shared/firestore/firestore.provider';
+import { VcsService } from '../../src/vcs/vcs.service';
 import { setupTestApp } from '../setup';
+import {
+  CreateReservationDto,
+  Execution,
+} from '../../src/reservations/dto/create-reservation.dto';
 
 describe('Reservations (e2e)', () => {
   let app: INestApplication;
@@ -59,9 +64,9 @@ describe('Reservations (e2e)', () => {
 
   describe('POST /api/v1/onpaku/reservations', () => {
     it('should create a new reservation successfully', () => {
-      const createReservationDto = {
+      const createReservationDto: CreateReservationDto = {
         reservation_id: 'reservation123',
-        user_id: 'user1',
+        email: 'user1@example.com',
         execution: {
           id: 'execution123',
           program_id: 'program123',
@@ -69,7 +74,7 @@ describe('Reservations (e2e)', () => {
           end_time: '2024-02-01T12:00:00+09:00',
           capacity: 10,
           price: 5000,
-        },
+        } as Execution,
       };
 
       return request(app.getHttpServer())
@@ -95,9 +100,8 @@ describe('Reservations (e2e)', () => {
     });
 
     it('should return 400 when required fields are missing', () => {
-      const invalidDto = {
-        user_id: 'user1',
-        // execution が欠けている
+      const invalidDto: Partial<CreateReservationDto> = {
+        reservation_id: 'reservation123',
       };
 
       return request(app.getHttpServer())
@@ -105,6 +109,23 @@ describe('Reservations (e2e)', () => {
         .set('Authorization', 'Bearer onpaku-api')
         .send(invalidDto)
         .expect(400);
+    });
+
+    it('should handle Firestore errors', () => {
+      const createReservationDto: CreateReservationDto = {
+        reservation_id: 'reservation123',
+        email: 'user1@example.com',
+        execution: {
+          id: 'execution123',
+          program_id: 'program123',
+          start_time: '2024-02-01T10:00:00+09:00',
+          end_time: '2024-02-01T12:00:00+09:00',
+          capacity: 10,
+          price: 5000,
+        } as Execution,
+      };
+
+      // ... rest of the test ...
     });
   });
 });

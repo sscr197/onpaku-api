@@ -5,6 +5,12 @@ import { AppModule } from '../../src/app.module';
 import { FirestoreProvider } from '../../src/shared/firestore/firestore.provider';
 import { VcsService } from '../../src/vcs/vcs.service';
 import { setupTestApp } from '../setup';
+import {
+  CreateProgramDto,
+  Program,
+  PartnerUser,
+} from '../../src/programs/dto/create-program.dto';
+import { ProgramRef } from '../../src/users/dto/program-ref';
 
 describe('Programs (e2e)', () => {
   let app: INestApplication;
@@ -67,7 +73,7 @@ describe('Programs (e2e)', () => {
 
   describe('POST /api/v1/onpaku/programs', () => {
     it('should create a new program successfully', () => {
-      const createProgramDto = {
+      const createProgramDto: CreateProgramDto = {
         program: {
           id: 'program1',
           title: 'テストプログラム',
@@ -85,7 +91,7 @@ describe('Programs (e2e)', () => {
           {
             email: 'partner@example.com',
             role: 'owner',
-          },
+          } as PartnerUser,
         ],
       };
 
@@ -103,11 +109,11 @@ describe('Programs (e2e)', () => {
           );
           expect(mockCollection.set).toHaveBeenCalled();
           expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
-            'partner@example.com',
+            createProgramDto.partner_users[0].email,
             expect.objectContaining({
               id: createProgramDto.program.id,
               title: createProgramDto.program.title,
-              role: 'owner',
+              role: createProgramDto.partner_users[0].role,
               placeName: createProgramDto.program.place_name,
               prefecture: createProgramDto.program.prefecture,
               address: createProgramDto.program.address,
@@ -120,9 +126,9 @@ describe('Programs (e2e)', () => {
       const invalidDto = {
         program: {
           title: 'テストプログラム',
-        },
+        } as Partial<Program>,
         partner_users: [],
-      };
+      } as Partial<CreateProgramDto>;
 
       return request(app.getHttpServer())
         .post('/api/v1/onpaku/programs')
@@ -137,7 +143,7 @@ describe('Programs (e2e)', () => {
         set: jest.fn().mockRejectedValueOnce(error),
       });
 
-      const createProgramDto = {
+      const createProgramDto: CreateProgramDto = {
         program: {
           id: 'program1',
           title: 'テストプログラム',
@@ -155,7 +161,7 @@ describe('Programs (e2e)', () => {
           {
             email: 'partner@example.com',
             role: 'owner',
-          },
+          } as PartnerUser,
         ],
       };
 

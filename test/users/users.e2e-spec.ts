@@ -5,6 +5,8 @@ import { AppModule } from '../../src/app.module';
 import { FirestoreProvider } from '../../src/shared/firestore/firestore.provider';
 import { VcsService } from '../../src/vcs/vcs.service';
 import { setupTestApp } from '../setup';
+import { CreateUserDto } from '../../src/users/dto/create-user.dto';
+import { UpdateUserDto } from '../../src/users/dto/update-user.dto';
 
 describe('Users (e2e)', () => {
   let app: INestApplication;
@@ -64,7 +66,7 @@ describe('Users (e2e)', () => {
 
   describe('POST /api/v1/onpaku/users', () => {
     it('should create a new user successfully', () => {
-      const createUserDto = {
+      const createUserDto: CreateUserDto = {
         id: 'user123',
         email: 'test@example.com',
         family_name: '山田',
@@ -129,9 +131,8 @@ describe('Users (e2e)', () => {
     });
 
     it('should return 400 when required fields are missing', () => {
-      const invalidDto = {
+      const invalidDto: Partial<CreateUserDto> = {
         email: 'test@example.com',
-        // 他の必須フィールドが欠けている
       };
 
       return request(app.getHttpServer())
@@ -144,7 +145,7 @@ describe('Users (e2e)', () => {
 
   describe('PATCH /api/v1/onpaku/users', () => {
     it('should update user successfully', () => {
-      const updateUserDto = {
+      const updateUserDto: UpdateUserDto = {
         id: 'user123',
         email: 'test@example.com',
         family_name: '山田',
@@ -187,7 +188,7 @@ describe('Users (e2e)', () => {
     });
 
     it('should return 404 when user not found', () => {
-      const updateUserDto = {
+      const updateUserDto: UpdateUserDto = {
         id: 'nonexistent',
         email: 'nonexistent@example.com',
         family_name: '存在',

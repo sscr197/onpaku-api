@@ -61,7 +61,7 @@ describe('ReservationsController', () => {
     it('should create a reservation successfully', async () => {
       const createReservationDto: CreateReservationDto = {
         reservation_id: 'reservation1',
-        user_id: 'user1',
+        email: 'user1@example.com',
         execution: {
           id: 'execution1',
           program_id: 'program1',
@@ -87,7 +87,7 @@ describe('ReservationsController', () => {
     it('should handle errors when creating reservation', async () => {
       const createReservationDto: CreateReservationDto = {
         reservation_id: 'reservation1',
-        user_id: 'user1',
+        email: 'user1@example.com',
         execution: {
           id: 'execution1',
           program_id: 'program1',
