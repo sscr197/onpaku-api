@@ -49,20 +49,18 @@ docker compose up -d
 npm run test
 ```
 
-### 統合テスト
+### E2Eテスト
+
+```bash
+npm run test:e2e
+```
+
+### Firebaseとのintegrationテスト
 
 ※ Dockerコンテナが起動している必要があります
 
 ```bash
 npm run test:integration
-```
-
-### E2Eテスト
-
-※ Dockerコンテナが起動している必要があります
-
-```bash
-npm run test:e2e
 ```
 
 ## API ドキュメント
