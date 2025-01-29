@@ -6,6 +6,7 @@ export class UpdateUserDto {
   @ApiProperty({
     description: 'オンパク側ユーザーID',
     example: 'user123',
+    required: true,
   })
   @IsString()
   id: string;
@@ -13,6 +14,8 @@ export class UpdateUserDto {
   @ApiProperty({
     description: 'メールアドレス',
     example: 'test@example.com',
+    required: true,
+    format: 'email',
   })
   @IsString()
   email: string;
@@ -20,6 +23,8 @@ export class UpdateUserDto {
   @ApiProperty({
     description: '姓',
     example: '山田',
+    required: false,
+    nullable: true,
   })
   @IsString()
   @IsOptional()
@@ -28,6 +33,8 @@ export class UpdateUserDto {
   @ApiProperty({
     description: '名',
     example: '次郎',
+    required: false,
+    nullable: true,
   })
   @IsString()
   @IsOptional()
@@ -36,7 +43,9 @@ export class UpdateUserDto {
   @ApiProperty({
     description: '管理プログラム一覧',
     type: [ProgramRef],
-    example: [{ programId: 'program123', role: 'partner' }],
+    required: false,
+    nullable: true,
+    example: [{ programId: 'program123', role: 'organizer' }],
   })
   @IsArray()
   @IsOptional()

@@ -7,11 +7,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ProgramRef } from './dto/program-ref';
 import { NotFoundException } from '@nestjs/common';
+import { ProgramsService } from '../programs/programs.service';
 
 describe('UsersService', () => {
   let service: UsersService;
   let firestoreMock: jest.Mocked<FirestoreProvider>;
   let vcsServiceMock: jest.Mocked<VcsService>;
+  let programsServiceMock: jest.Mocked<ProgramsService>;
   let loggerMock: jest.Mocked<CustomLogger>;
   let mockCollection: any;
   let mockDocRef: any;
@@ -19,7 +21,12 @@ describe('UsersService', () => {
   beforeEach(async () => {
     // Firestoreのモックを作成
     mockDocRef = {
-      get: jest.fn().mockResolvedValue({ exists: true }),
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          managementPrograms: [],
+        }),
+      }),
       set: jest.fn().mockResolvedValue(undefined),
       update: jest.fn().mockResolvedValue(undefined),
     };
@@ -41,6 +48,11 @@ describe('UsersService', () => {
       createOrUpdateUserVC: jest.fn().mockResolvedValue(undefined),
     } as any;
 
+    // ProgramsServiceのモックを作成
+    programsServiceMock = {
+      addPartnerUser: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
     // Loggerのモックを作成
     loggerMock = {
       setContext: jest.fn(),
@@ -59,6 +71,10 @@ describe('UsersService', () => {
         {
           provide: VcsService,
           useValue: vcsServiceMock,
+        },
+        {
+          provide: ProgramsService,
+          useValue: programsServiceMock,
         },
         {
           provide: CustomLogger,
@@ -183,7 +199,12 @@ describe('UsersService', () => {
       };
 
       // ユーザーが存在することをモック
-      mockDocRef.get.mockResolvedValueOnce({ exists: true });
+      mockDocRef.get.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          managementPrograms: [],
+        }),
+      });
 
       await service.updateUser(updateUserDto);
 
@@ -247,7 +268,12 @@ describe('UsersService', () => {
       const error = new Error('Firestore error');
 
       // ユーザーが存在することをモック
-      mockDocRef.get.mockResolvedValueOnce({ exists: true });
+      mockDocRef.get.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          managementPrograms: [],
+        }),
+      });
       mockDocRef.update.mockRejectedValueOnce(error);
 
       await expect(service.updateUser(updateUserDto)).rejects.toThrow(error);
@@ -256,6 +282,86 @@ describe('UsersService', () => {
         'Failed to update user: Firestore error',
         error.stack,
       );
+    });
+
+    it('should update a user and add new program partner successfully', async () => {
+      const existingPrograms = [
+        { programId: 'existing-program', role: 'staff' },
+      ];
+
+      // 既存のユーザーデータをモック
+      mockDocRef.get.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          managementPrograms: existingPrograms,
+        }),
+      });
+
+      const updateUserDto: UpdateUserDto = {
+        email: 'test@example.com',
+        id: 'user1',
+        family_name: '山田',
+        first_name: '花子',
+        management_programs: [
+          { programId: 'existing-program', role: 'staff' },
+          { programId: 'new-program', role: 'partner' },
+        ],
+      };
+
+      await service.updateUser(updateUserDto);
+
+      // 新しいプログラムのみがパートナーとして追加されることを確認
+      expect(programsServiceMock.addPartnerUser).toHaveBeenCalledTimes(1);
+      expect(programsServiceMock.addPartnerUser).toHaveBeenCalledWith(
+        'new-program',
+        updateUserDto.email,
+        'partner',
+      );
+
+      // ユーザー情報の更新を確認
+      expect(mockDocRef.update).toHaveBeenCalledWith({
+        familyName: updateUserDto.family_name,
+        firstName: updateUserDto.first_name,
+        managementPrograms: updateUserDto.management_programs,
+      });
+
+      // VCの更新を確認
+      expect(vcsServiceMock.createOrUpdateUserVC).toHaveBeenCalledWith(
+        updateUserDto.email,
+        expect.objectContaining({
+          id: updateUserDto.id,
+          familyName: updateUserDto.family_name,
+          firstName: updateUserDto.first_name,
+        }),
+      );
+    });
+
+    it('should handle errors when adding program partner', async () => {
+      mockDocRef.get.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          managementPrograms: [],
+        }),
+      });
+
+      const updateUserDto: UpdateUserDto = {
+        email: 'test@example.com',
+        id: 'user1',
+        management_programs: [{ programId: 'new-program', role: 'partner' }],
+      };
+
+      const error = new Error('Failed to add partner');
+      programsServiceMock.addPartnerUser.mockRejectedValueOnce(error);
+
+      await expect(service.updateUser(updateUserDto)).rejects.toThrow(error);
+
+      expect(programsServiceMock.addPartnerUser).toHaveBeenCalledWith(
+        'new-program',
+        updateUserDto.email,
+        'partner',
+      );
+      expect(mockDocRef.update).not.toHaveBeenCalled();
+      expect(vcsServiceMock.createOrUpdateUserVC).not.toHaveBeenCalled();
     });
   });
 });

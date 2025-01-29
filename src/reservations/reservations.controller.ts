@@ -11,7 +11,7 @@ import {
 import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Reservations')
-@ApiBearerAuth()
+@ApiBearerAuth('api-key')
 @Controller('api/v1/onpaku/reservations')
 @UseGuards(ApiKeyGuard)
 export class ReservationsController {
@@ -23,11 +23,33 @@ export class ReservationsController {
   }
 
   @Post()
-  @ApiOperation({ summary: '予約登録' })
-  @ApiResponse({ status: 201, description: '予約の登録に成功' })
-  @ApiResponse({ status: 400, description: 'リクエストデータが不正' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
-  @ApiResponse({ status: 404, description: 'ユーザーが見つかりません' })
+  @ApiOperation({
+    summary: '予約登録',
+    description:
+      'オンパクのプログラム実施回に対する予約を登録します。予約IDは一意である必要があります。指定された実施回の定員を超える予約はエラーとなります。',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '予約の登録に成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'リクエストデータが不正です。必須項目の未入力や、データ形式が間違っている可能性があります。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      '指定されたユーザーIDまたはプログラム実施回IDが見つかりません。',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '既に同じ予約IDが存在するか、実施回の定員に達しています。',
+  })
   async createReservation(
     @Body() createReservationDto: CreateReservationDto,
   ): Promise<void> {

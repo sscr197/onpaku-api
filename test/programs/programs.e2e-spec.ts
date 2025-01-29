@@ -43,6 +43,7 @@ describe('Programs (e2e)', () => {
 
     // VcsServiceのモックを作成
     vcsServiceMock = {
+      createOrUpdateUserVC: jest.fn().mockResolvedValue(undefined),
       createPartnerVC: jest.fn().mockResolvedValue(undefined),
     } as any;
 
@@ -107,6 +108,9 @@ describe('Programs (e2e)', () => {
               id: createProgramDto.program.id,
               title: createProgramDto.program.title,
               role: 'owner',
+              placeName: createProgramDto.program.place_name,
+              prefecture: createProgramDto.program.prefecture,
+              address: createProgramDto.program.address,
             }),
           );
         });

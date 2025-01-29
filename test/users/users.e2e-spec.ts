@@ -16,26 +16,18 @@ describe('Users (e2e)', () => {
   beforeAll(async () => {
     // Firestoreのモックを作成
     mockDocRef = {
-      get: jest.fn().mockResolvedValue({ exists: true }),
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          managementPrograms: [],
+        }),
+      }),
       set: jest.fn().mockResolvedValue(undefined),
       update: jest.fn().mockResolvedValue(undefined),
     };
 
     mockCollection = {
       doc: jest.fn().mockReturnValue(mockDocRef),
-      where: jest.fn().mockReturnThis(),
-      get: jest.fn().mockResolvedValue({
-        empty: false,
-        docs: [
-          {
-            id: 'user1',
-            data: () => ({
-              email: 'test@example.com',
-              name: 'Test User',
-            }),
-          },
-        ],
-      }),
     };
 
     const mockFirestore = {
@@ -46,8 +38,10 @@ describe('Users (e2e)', () => {
       getFirestore: jest.fn().mockReturnValue(mockFirestore),
     } as any;
 
+    // VcsServiceのモックを作成
     vcsServiceMock = {
       createOrUpdateUserVC: jest.fn().mockResolvedValue(undefined),
+      createPartnerVC: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -164,7 +158,12 @@ describe('Users (e2e)', () => {
       };
 
       // ユーザーが存在することをモック
-      mockDocRef.get.mockResolvedValueOnce({ exists: true });
+      mockDocRef.get.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          managementPrograms: [],
+        }),
+      });
 
       return request(app.getHttpServer())
         .patch('/api/v1/onpaku/users')

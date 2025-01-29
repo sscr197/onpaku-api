@@ -12,7 +12,7 @@ import {
 import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Users')
-@ApiBearerAuth()
+@ApiBearerAuth('api-key')
 @Controller('api/v1/onpaku/users')
 @UseGuards(ApiKeyGuard)
 export class UsersController {
@@ -24,10 +24,28 @@ export class UsersController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'ユーザー新規登録' })
-  @ApiResponse({ status: 201, description: 'ユーザーの登録に成功' })
-  @ApiResponse({ status: 400, description: 'リクエストデータが不正' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
+  @ApiOperation({
+    summary: 'ユーザー新規登録',
+    description:
+      'オンパクのユーザー情報を新規登録します。既に存在するメールアドレスの場合はエラーとなります。',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'ユーザーの登録に成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'リクエストデータが不正です。必須項目の未入力や、データ形式が間違っている可能性があります。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '既に同じメールアドレスのユーザーが存在します。',
+  })
   async createUser(@Body() createUserDto: CreateUserDto): Promise<void> {
     this.logger.debug(
       `Received request to create user: ${createUserDto.email}`,
@@ -41,10 +59,28 @@ export class UsersController {
   }
 
   @Patch()
-  @ApiOperation({ summary: 'ユーザー情報更新' })
-  @ApiResponse({ status: 200, description: 'ユーザー情報の更新に成功' })
-  @ApiResponse({ status: 400, description: 'リクエストデータが不正' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
+  @ApiOperation({
+    summary: 'ユーザー情報更新',
+    description:
+      '既存のユーザー情報を更新します。IDとメールアドレスは必須で、その他のフィールドは任意です。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'ユーザー情報の更新に成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'リクエストデータが不正です。必須項目の未入力や、データ形式が間違っている可能性があります。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '指定されたIDのユーザーが見つかりません。',
+  })
   async updateUser(@Body() updateUserDto: UpdateUserDto): Promise<void> {
     this.logger.debug(
       `Received request to update user: ${updateUserDto.email}`,

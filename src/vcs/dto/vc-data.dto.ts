@@ -1,4 +1,11 @@
-import { IsDate, IsEnum, IsObject, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsObject,
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum VCType {
@@ -17,37 +24,62 @@ export class VCDataDto {
   @ApiProperty({
     description: 'ユーザーのメールアドレス',
     example: 'test@example.com',
+    required: true,
+    format: 'email',
   })
   @IsString()
+  @IsEmail()
+  @IsNotEmpty()
   userEmail: string;
 
   @ApiProperty({
-    description: 'VCのタイプ',
+    description:
+      'VCのタイプ（user: ユーザー証明書, partner: パートナー証明書, event: イベント参加証明書）',
     enum: VCType,
     example: VCType.User,
+    required: true,
+    enumName: 'VCType',
   })
   @IsEnum(VCType)
+  @IsNotEmpty()
   type: VCType;
 
   @ApiProperty({
-    description: 'VC固有のデータ',
-    example: { id: '1234567890', name: 'テストユーザー' },
+    description: 'VC固有のデータ（タイプに応じて異なる構造のJSONオブジェクト）',
+    example: {
+      id: '1234567890',
+      name: 'テストユーザー',
+      role: 'member',
+      attributes: {
+        verified: true,
+        level: 1,
+      },
+    },
+    required: true,
   })
   @IsObject()
-  vcData: any;
+  @IsNotEmpty()
+  vcData: Record<string, any>;
 
   @ApiProperty({
-    description: 'VCのステータス',
+    description:
+      'VCのステータス（pending: 発行済み未有効化, active: 有効, revoked: 無効化済み）',
     enum: VCStatus,
     example: VCStatus.Pending,
+    required: true,
+    enumName: 'VCStatus',
   })
   @IsEnum(VCStatus)
+  @IsNotEmpty()
   status: VCStatus;
 
   @ApiProperty({
-    description: 'VCの発行日時',
-    example: new Date().toISOString(),
+    description: 'VCの発行日時（ISO8601形式）',
+    example: '2024-02-01T10:00:00.000Z',
+    required: true,
+    format: 'date-time',
   })
   @IsDate()
+  @IsNotEmpty()
   issuedAt: Date;
 }

@@ -15,11 +15,13 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
 import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('VCs')
-@ApiBearerAuth()
+@ApiBearerAuth('api-key')
 @Controller('api/v1/onpaku/vcs')
 @UseGuards(ApiKeyGuard)
 export class VcsController {
@@ -31,14 +33,32 @@ export class VcsController {
   }
 
   @Get('pending')
-  @ApiOperation({ summary: 'メールアドレスに紐づくPending状態のVC一覧を取得' })
+  @ApiOperation({
+    summary: 'メールアドレスに紐づくPending状態のVC一覧を取得',
+    description:
+      '指定されたメールアドレスに関連する、まだアクティベートされていないVC（Verifiable Credential）の一覧を取得します。',
+  })
+  @ApiQuery({
+    name: 'email',
+    description: '検索対象のメールアドレス',
+    required: true,
+    type: String,
+    example: 'test@example.com',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Pending状態のVC一覧を返却',
+    description:
+      'Pending状態のVC一覧を返却します。該当するVCが存在しない場合は空配列を返します。',
     type: [VCDataDto],
   })
-  @ApiResponse({ status: 400, description: 'メールアドレスが指定されていない' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
+  @ApiResponse({
+    status: 400,
+    description: 'メールアドレスが指定されていないか、不正なフォーマットです。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
   async getPendingVCs(@Query('email') email: string): Promise<VCDataDto[]> {
     if (!email) {
       throw new BadRequestException('Email is required');
@@ -59,10 +79,45 @@ export class VcsController {
   }
 
   @Patch('activate')
-  @ApiOperation({ summary: 'VCをアクティベート' })
-  @ApiResponse({ status: 200, description: 'VCのアクティベートに成功' })
-  @ApiResponse({ status: 400, description: 'VC IDが指定されていない' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
+  @ApiOperation({
+    summary: 'VCをアクティベート',
+    description:
+      '指定されたVCをアクティベート（有効化）します。VCのステータスがpendingの場合のみ実行可能です。',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['vcId'],
+      properties: {
+        vcId: {
+          type: 'string',
+          description: 'アクティベート対象のVC ID',
+          example: 'vc_123456789',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'VCのアクティベートに成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'VC IDが指定されていないか、不正なフォーマットです。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '指定されたVC IDのVCが見つかりません。',
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      '指定されたVCは既にアクティベートされているか、無効化されています。',
+  })
   async activateVC(@Body('vcId') vcId: string): Promise<void> {
     if (!vcId) {
       throw new BadRequestException('VC ID is required');
@@ -77,10 +132,45 @@ export class VcsController {
   }
 
   @Patch('revoke')
-  @ApiOperation({ summary: 'VCを無効化' })
-  @ApiResponse({ status: 200, description: 'VCの無効化に成功' })
-  @ApiResponse({ status: 400, description: 'VC IDが指定されていない' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
+  @ApiOperation({
+    summary: 'VCを無効化',
+    description:
+      '指定されたVCを無効化します。VCのステータスがactiveの場合のみ実行可能です。',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['vcId'],
+      properties: {
+        vcId: {
+          type: 'string',
+          description: '無効化対象のVC ID',
+          example: 'vc_123456789',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'VCの無効化に成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'VC IDが指定されていないか、不正なフォーマットです。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '指定されたVC IDのVCが見つかりません。',
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      '指定されたVCは既に無効化されているか、まだアクティベートされていません。',
+  })
   async revokeVC(@Body('vcId') vcId: string): Promise<void> {
     if (!vcId) {
       throw new BadRequestException('VC ID is required');

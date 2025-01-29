@@ -11,7 +11,7 @@ import {
 import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Programs')
-@ApiBearerAuth()
+@ApiBearerAuth('api-key')
 @Controller('api/v1/onpaku/programs')
 @UseGuards(ApiKeyGuard)
 export class ProgramsController {
@@ -23,10 +23,29 @@ export class ProgramsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'プログラム登録・更新' })
-  @ApiResponse({ status: 201, description: 'プログラムの登録・更新に成功' })
-  @ApiResponse({ status: 400, description: 'リクエストデータが不正' })
-  @ApiResponse({ status: 401, description: '認証エラー' })
+  @ApiOperation({
+    summary: 'プログラム登録・更新',
+    description:
+      'オンパクのプログラム情報を登録・更新します。プログラムIDが既に存在する場合は更新、存在しない場合は新規登録となります。パートナーユーザーは最低1名の登録が必要です。',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'プログラムの登録・更新に成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'リクエストデータが不正です。必須項目の未入力や、データ形式が間違っている可能性があります。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      '指定されたパートナーユーザーのメールアドレスが登録されていません。',
+  })
   async createOrUpdateProgram(
     @Body() createProgramDto: CreateProgramDto,
   ): Promise<void> {

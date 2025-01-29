@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CreateProgramDto } from './dto/create-program.dto';
@@ -65,6 +65,71 @@ export class ProgramsService {
     } catch (error) {
       this.logger.error(
         `Failed to create/update program: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async addPartnerUser(
+    programId: string,
+    email: string,
+    role: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Adding partner user ${email} with role ${role} to program ${programId}`,
+    );
+
+    try {
+      const programRef = this.firestore
+        .getFirestore()
+        .collection('programs')
+        .doc(programId);
+
+      const programDoc = await programRef.get();
+      if (!programDoc.exists) {
+        throw new NotFoundException(`Program ${programId} not found`);
+      }
+
+      const programData = programDoc.data();
+      if (!programData) {
+        throw new Error(`Program data is empty for ${programId}`);
+      }
+
+      const partnerUsers = programData.partnerUsers || [];
+
+      // 既存のパートナーユーザーリストを更新
+      const existingPartnerIndex = partnerUsers.findIndex(
+        (p) => p.email === email,
+      );
+      if (existingPartnerIndex >= 0) {
+        partnerUsers[existingPartnerIndex].role = role;
+      } else {
+        partnerUsers.push({ email, role });
+      }
+
+      // プログラムを更新
+      await programRef.update({
+        partnerUsers,
+        updatedAt: new Date(),
+      });
+
+      // パートナーVCを作成
+      await this.vcsService.createPartnerVC(email, {
+        id: programId,
+        title: programData.title,
+        role: role,
+        placeName: programData.placeName,
+        prefecture: programData.prefecture,
+        address: programData.address,
+      });
+
+      this.logger.log(
+        `Partner user ${email} added successfully to program ${programId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to add partner user: ${error.message}`,
         error.stack,
       );
       throw error;
