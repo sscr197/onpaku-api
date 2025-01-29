@@ -20,21 +20,6 @@ services:
     depends_on:
       - firestore
 
-  # test:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - .:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - NODE_ENV=test
-  #     - FIRESTORE_EMULATOR_HOST=firestore:8080
-  #     - FIRESTORE_PROJECT_ID=${FIRESTORE_PROJECT_ID:-demo-project}
-  #   command: npm run test:integration
-  #   depends_on:
-  #     - firestore
-
   firestore:
     build:
       context: ./firestore
