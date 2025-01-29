@@ -5,7 +5,7 @@ import {
   UseGuards,
   BadRequestException,
   Patch,
-  Param,
+  Body,
 } from '@nestjs/common';
 import { VcsService } from './vcs.service';
 import { VCDataDto } from './dto/vc-data.dto';
@@ -58,12 +58,12 @@ export class VcsController {
     }
   }
 
-  @Patch(':vcId/activate')
+  @Patch('activate')
   @ApiOperation({ summary: 'VCをアクティベート' })
   @ApiResponse({ status: 200, description: 'VCのアクティベートに成功' })
   @ApiResponse({ status: 400, description: 'VC IDが指定されていない' })
   @ApiResponse({ status: 401, description: '認証エラー' })
-  async activateVC(@Param('vcId') vcId: string): Promise<void> {
+  async activateVC(@Body('vcId') vcId: string): Promise<void> {
     if (!vcId) {
       throw new BadRequestException('VC ID is required');
     }
@@ -76,12 +76,12 @@ export class VcsController {
     }
   }
 
-  @Patch(':vcId/revoke')
+  @Patch('revoke')
   @ApiOperation({ summary: 'VCを無効化' })
   @ApiResponse({ status: 200, description: 'VCの無効化に成功' })
   @ApiResponse({ status: 400, description: 'VC IDが指定されていない' })
   @ApiResponse({ status: 401, description: '認証エラー' })
-  async revokeVC(@Param('vcId') vcId: string): Promise<void> {
+  async revokeVC(@Body('vcId') vcId: string): Promise<void> {
     if (!vcId) {
       throw new BadRequestException('VC ID is required');
     }

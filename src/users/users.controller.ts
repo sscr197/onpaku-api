@@ -13,7 +13,7 @@ import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@Controller('api/v1/onpaku/user')
+@Controller('api/v1/onpaku/users')
 @UseGuards(ApiKeyGuard)
 export class UsersController {
   constructor(

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -69,6 +69,13 @@ export class UsersService {
         .collection('users')
         .doc(dto.email);
 
+      // ユーザーの存在確認を追加
+      const userDoc = await userRef.get();
+      if (!userDoc.exists) {
+        this.logger.error(`User not found: ${dto.email}`);
+        throw new NotFoundException(`User with email ${dto.email} not found`);
+      }
+
       const updateData: any = {};
       if (dto.family_name) updateData.familyName = dto.family_name;
       if (dto.first_name) updateData.firstName = dto.first_name;
@@ -87,6 +94,9 @@ export class UsersService {
       };
       await this.vcsService.createOrUpdateUserVC(dto.email, userData);
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       this.logger.error(`Failed to update user: ${error.message}`, error.stack);
       throw error;
     }

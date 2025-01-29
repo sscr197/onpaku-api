@@ -6,6 +6,7 @@ import { CustomLogger } from '../shared/logger/custom.logger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ProgramRef } from './dto/program-ref';
+import { NotFoundException } from '@nestjs/common';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -13,13 +14,18 @@ describe('UsersService', () => {
   let vcsServiceMock: jest.Mocked<VcsService>;
   let loggerMock: jest.Mocked<CustomLogger>;
   let mockCollection: any;
+  let mockDocRef: any;
 
   beforeEach(async () => {
     // Firestoreのモックを作成
-    mockCollection = {
-      doc: jest.fn().mockReturnThis(),
+    mockDocRef = {
+      get: jest.fn().mockResolvedValue({ exists: true }),
       set: jest.fn().mockResolvedValue(undefined),
       update: jest.fn().mockResolvedValue(undefined),
+    };
+
+    mockCollection = {
+      doc: jest.fn().mockReturnValue(mockDocRef),
     };
 
     const mockFirestore = {
@@ -91,7 +97,7 @@ describe('UsersService', () => {
         'users',
       );
       expect(mockCollection.doc).toHaveBeenCalledWith(createUserDto.email);
-      expect(mockCollection.set).toHaveBeenCalledWith(
+      expect(mockDocRef.set).toHaveBeenCalledWith(
         expect.objectContaining({
           onpakuUserId: createUserDto.id,
           familyName: createUserDto.family_name,
@@ -104,6 +110,7 @@ describe('UsersService', () => {
           street: createUserDto.street,
           tel: createUserDto.tel,
           managementPrograms: [],
+          createdAt: expect.any(Date),
         }),
       );
 
@@ -148,7 +155,7 @@ describe('UsersService', () => {
       };
       const error = new Error('Firestore error');
 
-      mockCollection.set.mockRejectedValueOnce(error);
+      mockDocRef.set.mockRejectedValueOnce(error);
 
       await expect(service.createUser(createUserDto)).rejects.toThrow(error);
 
@@ -175,13 +182,17 @@ describe('UsersService', () => {
         management_programs: [mockProgramRef],
       };
 
+      // ユーザーが存在することをモック
+      mockDocRef.get.mockResolvedValueOnce({ exists: true });
+
       await service.updateUser(updateUserDto);
 
       expect(firestoreMock.getFirestore().collection).toHaveBeenCalledWith(
         'users',
       );
       expect(mockCollection.doc).toHaveBeenCalledWith(updateUserDto.email);
-      expect(mockCollection.update).toHaveBeenCalledWith({
+      expect(mockDocRef.get).toHaveBeenCalled();
+      expect(mockDocRef.update).toHaveBeenCalledWith({
         familyName: updateUserDto.family_name,
         firstName: updateUserDto.first_name,
         managementPrograms: updateUserDto.management_programs,
@@ -204,6 +215,28 @@ describe('UsersService', () => {
       );
     });
 
+    it('should throw NotFoundException when user does not exist', async () => {
+      const updateUserDto: UpdateUserDto = {
+        email: 'nonexistent@example.com',
+        id: 'user1',
+        family_name: '山田',
+        first_name: '花子',
+      };
+
+      // ユーザーが存在しないことをモック
+      mockDocRef.get.mockResolvedValueOnce({ exists: false });
+
+      await expect(service.updateUser(updateUserDto)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        `User not found: ${updateUserDto.email}`,
+      );
+      expect(mockDocRef.update).not.toHaveBeenCalled();
+      expect(vcsServiceMock.createOrUpdateUserVC).not.toHaveBeenCalled();
+    });
+
     it('should handle errors when updating user', async () => {
       const updateUserDto: UpdateUserDto = {
         email: 'test@example.com',
@@ -213,7 +246,9 @@ describe('UsersService', () => {
       };
       const error = new Error('Firestore error');
 
-      mockCollection.update.mockRejectedValueOnce(error);
+      // ユーザーが存在することをモック
+      mockDocRef.get.mockResolvedValueOnce({ exists: true });
+      mockDocRef.update.mockRejectedValueOnce(error);
 
       await expect(service.updateUser(updateUserDto)).rejects.toThrow(error);
 

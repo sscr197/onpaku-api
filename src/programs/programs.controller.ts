@@ -12,7 +12,7 @@ import { CustomLogger } from '../shared/logger/custom.logger';
 
 @ApiTags('Programs')
 @ApiBearerAuth()
-@Controller('api/v1/onpaku/program')
+@Controller('api/v1/onpaku/programs')
 @UseGuards(ApiKeyGuard)
 export class ProgramsController {
   constructor(
