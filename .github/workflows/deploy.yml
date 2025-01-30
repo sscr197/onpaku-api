@@ -40,6 +40,12 @@ jobs:
         run: npm run test:e2e
         env:
           NODE_ENV: test
+          PORT: 3000
+          API_KEY: onpaku-api
+          FIRESTORE_PROJECT_ID: ${{ env.PROJECT_ID }}
+          APP_NAME: onpaku-api
+          FIRESTORE_CLIENT_EMAIL: ${{ secrets.FIRESTORE_CLIENT_EMAIL }}
+          FIRESTORE_PRIVATE_KEY: ${{ secrets.FIRESTORE_PRIVATE_KEY }}
 
       - name: Google Cloud Auth
         if: github.ref == 'refs/heads/main'
