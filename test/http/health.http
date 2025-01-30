@@ -1,0 +1,6 @@
+@baseUrl = https://onpaku-api-157884168241.asia-northeast1.run.app/
+@apiKey = onpaku-api
+
+### ヘルスチェック
+GET {{baseUrl}}
+x-api-key: {{apiKey}}

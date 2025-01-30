@@ -11,6 +11,9 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
+  // CORSを有効化
+  app.enableCors();
+
   // カスタムロガーを設定
   const logger = await app.resolve(CustomLogger);
   app.useLogger(logger);
@@ -50,7 +53,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   const port = process.env.PORT ?? 8080;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   logger.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap();
