@@ -20,6 +20,7 @@ ARG FIRESTORE_PRIVATE_KEY
 
 # Set environment variables
 ENV NODE_ENV=$NODE_ENV \
+    PORT=8080 \
     FIRESTORE_PROJECT_ID=$FIRESTORE_PROJECT_ID \
     FIRESTORE_CLIENT_EMAIL=$FIRESTORE_CLIENT_EMAIL \
     FIRESTORE_PRIVATE_KEY=$FIRESTORE_PRIVATE_KEY
@@ -35,6 +36,6 @@ RUN npm ci --ignore-scripts --only=production
 # Copy built application
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["npm", "run", "start:prod"] 
