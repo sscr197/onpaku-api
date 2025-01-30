@@ -5,6 +5,8 @@ env:
   PROJECT_ID: onpaku
   REGION: asia-northeast1
   DOCKER_IMAGE_URL: asia-northeast1-docker.pkg.dev/onpaku/api/onpaku-api
+  APP_NAME: onpaku-api
+  API_KEY: onpaku-api
 
 on:
   push:
@@ -41,9 +43,9 @@ jobs:
         env:
           NODE_ENV: test
           PORT: 3000
-          API_KEY: onpaku-api
+          API_KEY: ${{ env.API_KEY }}
           FIRESTORE_PROJECT_ID: ${{ env.PROJECT_ID }}
-          APP_NAME: onpaku-api
+          APP_NAME: ${{ env.APP_NAME }}
           FIRESTORE_CLIENT_EMAIL: ${{ secrets.FIRESTORE_CLIENT_EMAIL }}
           FIRESTORE_PRIVATE_KEY: ${{ secrets.FIRESTORE_PRIVATE_KEY }}
 
@@ -71,6 +73,8 @@ jobs:
             --build-arg FIRESTORE_PROJECT_ID=${{ env.PROJECT_ID }} \
             --build-arg FIRESTORE_CLIENT_EMAIL=${{ secrets.FIRESTORE_CLIENT_EMAIL }} \
             --build-arg FIRESTORE_PRIVATE_KEY='${{ secrets.FIRESTORE_PRIVATE_KEY }}' \
+            --build-arg API_KEY=${{ env.API_KEY }} \
+            --build-arg APP_NAME=${{ env.APP_NAME }} \
             -t ${{ env.DOCKER_IMAGE_URL }}:${{ github.sha }} \
             -t ${{ env.DOCKER_IMAGE_URL }}:latest .
           docker push ${{ env.DOCKER_IMAGE_URL }}:${{ github.sha }}
@@ -87,4 +91,6 @@ jobs:
             --set-env-vars="NODE_ENV=production" \
             --set-env-vars="FIRESTORE_PROJECT_ID=${{ env.PROJECT_ID }}" \
             --set-env-vars="FIRESTORE_CLIENT_EMAIL=${{ secrets.FIRESTORE_CLIENT_EMAIL }}" \
-            --set-env-vars="FIRESTORE_PRIVATE_KEY=${{ secrets.FIRESTORE_PRIVATE_KEY }}"
+            --set-env-vars="FIRESTORE_PRIVATE_KEY=${{ secrets.FIRESTORE_PRIVATE_KEY }}" \
+            --set-env-vars="API_KEY=${{ env.API_KEY }}" \
+            --set-env-vars="APP_NAME=${{ env.APP_NAME }}"
