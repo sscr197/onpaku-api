@@ -76,14 +76,6 @@ jobs:
           docker push ${{ env.DOCKER_IMAGE_URL }}:${{ github.sha }}
           docker push ${{ env.DOCKER_IMAGE_URL }}:latest
 
-      - name: Set IAM Policy
-        if: github.ref == 'refs/heads/main'
-        run: |
-          gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
-            --region=${{ env.REGION }} \
-            --member=allUsers \
-            --role=roles/run.invoker
-
       - name: Deploy to Cloud Run
         if: github.ref == 'refs/heads/main'
         run: |
