@@ -7,10 +7,7 @@ COPY package*.json ./
 
 
 # Install production dependencies.
-RUN npm install typescript
-RUN npm install -g ts-node
-RUN npm install --only=production
-RUN npm build
+RUN npm ci --ignore-scripts --only=production
 
 # Copy local code to the container image.
 COPY . .
