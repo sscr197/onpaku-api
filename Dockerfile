@@ -1,16 +1,19 @@
 # Build stage
 FROM node:20-bullseye-slim AS builder
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm ci
 
+
+# Install production dependencies.
+RUN npm install typescript
+RUN npm install -g ts-node
+RUN npm install --only=production
+RUN npm build
+
+# Copy local code to the container image.
 COPY . .
-RUN npm run build
-
-# Production stage
-FROM node:20-bullseye-slim
 
 # Build arguments for environment variables
 ARG NODE_ENV
@@ -29,17 +32,10 @@ ENV NODE_ENV=$NODE_ENV \
     API_KEY=$API_KEY \
     APP_NAME=$APP_NAME
 
-WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Service must listen to $PORT environment variable.
+# This default value facilitates local development.
+ENV PORT 8080
 
-# Install only production dependencies
-RUN npm ci --ignore-scripts --only=production
-
-# Copy built application
-COPY --from=builder /app/dist ./dist
-
-EXPOSE 8080
-
-CMD ["npm", "run", "start"] 
+# Run the web service on container startup.
+CMD [ "npm", "start", "prod" ]
