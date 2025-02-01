@@ -9,12 +9,12 @@ export class FirestoreProvider implements OnModuleInit {
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit() {
-    // アプリケーションが初期化されていない場合のみ初期化
     if (admin.apps.length === 0) {
       const projectId = this.configService.get<string>('FIRESTORE_PROJECT_ID');
+      const isEmulator = this.configService.get('NODE_ENV') === 'development';
 
-      // 開発環境（エミュレータ）の場合
-      if (this.configService.get('FIRESTORE_EMULATOR_HOST')) {
+      if (isEmulator && this.configService.get('FIRESTORE_EMULATOR_HOST')) {
+        // 開発環境（エミュレータ）の場合
         process.env.FIRESTORE_EMULATOR_HOST = this.configService.get(
           'FIRESTORE_EMULATOR_HOST',
         );
@@ -22,15 +22,18 @@ export class FirestoreProvider implements OnModuleInit {
           projectId,
         });
       } else {
-        // 本番環境の場合は、環境変数から認証情報を読み込む
+        // 本番環境の場合
         const clientEmail = this.configService.get<string>(
           'FIRESTORE_CLIENT_EMAIL',
         );
         const privateKey = this.configService.get<string>(
           'FIRESTORE_PRIVATE_KEY',
         );
+        const databaseId = this.configService.get<string>(
+          'FIRESTORE_DATABASE_ID',
+        );
 
-        if (!clientEmail || !privateKey) {
+        if (!clientEmail || !privateKey || !projectId) {
           throw new Error('Firestore credentials are not properly configured');
         }
 
@@ -40,11 +43,21 @@ export class FirestoreProvider implements OnModuleInit {
             clientEmail,
             privateKey: privateKey.replace(/\\n/g, '\n'),
           }),
+          projectId,
         });
       }
     }
 
     this.db = admin.firestore();
+
+    // Firestoreの詳細設定
+    const databaseId = this.configService.get<string>('FIRESTORE_DATABASE_ID');
+    if (databaseId) {
+      this.db.settings({
+        databaseId,
+        ignoreUndefinedProperties: true,
+      });
+    }
   }
 
   getFirestore(): FirebaseFirestore.Firestore {

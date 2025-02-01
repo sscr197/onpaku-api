@@ -39,6 +39,10 @@ class EnvironmentVariables {
   FIRESTORE_PRIVATE_KEY?: string;
 
   @IsString()
+  @IsOptional()
+  FIRESTORE_DATABASE_ID?: string;
+
+  @IsString()
   APP_NAME: string;
 }
 

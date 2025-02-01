@@ -3,4 +3,4 @@
 
 ### ヘルスチェック
 GET {{baseUrl}}
-x-api-key: {{apiKey}}
+x-api-key: : {{apiKey}}
