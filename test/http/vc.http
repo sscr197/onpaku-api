@@ -1,5 +1,5 @@
 ### 環境変数
-@baseUrl = http://localhost:3000/api/v1/onpaku
+@baseUrl = https://onpaku-api-157884168241.asia-northeast1.run.app/api/v1/onpaku
 @apiKey = onpaku-api
 
 ### メールアドレスに紐づくPending状態のVC一覧を取得
