@@ -14,7 +14,6 @@ export class FirestoreProvider implements OnModuleInit {
       const isEmulator = this.configService.get('NODE_ENV') === 'development';
 
       if (isEmulator && this.configService.get('FIRESTORE_EMULATOR_HOST')) {
-        // 開発環境（エミュレータ）の場合
         process.env.FIRESTORE_EMULATOR_HOST = this.configService.get(
           'FIRESTORE_EMULATOR_HOST',
         );
@@ -22,7 +21,6 @@ export class FirestoreProvider implements OnModuleInit {
           projectId,
         });
       } else {
-        // 本番環境の場合
         const clientEmail = this.configService.get<string>(
           'FIRESTORE_CLIENT_EMAIL',
         );
@@ -31,6 +29,9 @@ export class FirestoreProvider implements OnModuleInit {
         );
         const databaseId = this.configService.get<string>(
           'FIRESTORE_DATABASE_ID',
+        );
+        const databaseUrl = this.configService.get<string>(
+          'FIREBASE_DATABASE_URL',
         );
 
         if (!clientEmail || !privateKey || !projectId) {
@@ -43,6 +44,7 @@ export class FirestoreProvider implements OnModuleInit {
             clientEmail,
             privateKey: privateKey.replace(/\\n/g, '\n'),
           }),
+          databaseURL: databaseUrl,
           projectId,
         });
       }

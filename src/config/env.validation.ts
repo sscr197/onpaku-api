@@ -43,6 +43,10 @@ class EnvironmentVariables {
   FIRESTORE_DATABASE_ID?: string;
 
   @IsString()
+  @IsOptional()
+  FIREBASE_DATABASE_URL?: string;
+
+  @IsString()
   APP_NAME: string;
 }
 
