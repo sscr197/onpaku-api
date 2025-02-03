@@ -15,14 +15,8 @@ function logEnvVariables(logger: CustomLogger): void {
   logger.log(`APP_NAME: ${process.env.APP_NAME}`);
   logger.log(`FIRESTORE_EMULATOR_HOST: ${process.env.FIRESTORE_EMULATOR_HOST}`);
   logger.log(`FIRESTORE_PROJECT_ID: ${process.env.FIRESTORE_PROJECT_ID}`);
-  logger.log(
-    'FIRESTORE_CLIENT_EMAIL:',
-    process.env.FIRESTORE_CLIENT_EMAIL ? 'SET' : 'NOT SET',
-  );
-  logger.log(
-    'FIRESTORE_PRIVATE_KEY:',
-    process.env.FIRESTORE_PRIVATE_KEY ? 'SET' : 'NOT SET',
-  );
+  logger.log(`FIRESTORE_CLIENT_EMAIL: ${process.env.FIRESTORE_CLIENT_EMAIL}`);
+  logger.log(`FIRESTORE_PRIVATE_KEY: ${process.env.FIRESTORE_PRIVATE_KEY}`);
   logger.log(`FIRESTORE_DATABASE_ID: ${process.env.FIRESTORE_DATABASE_ID}`);
   logger.log(`FIREBASE_DATABASE_URL: ${process.env.FIREBASE_DATABASE_URL}`);
   logger.log('----- End of Environment Variables -----\n');

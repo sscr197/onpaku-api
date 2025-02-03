@@ -75,7 +75,7 @@ jobs:
             --build-arg FIRESTORE_CLIENT_EMAIL=${{ secrets.FIRESTORE_CLIENT_EMAIL }} \
             --build-arg FIRESTORE_PRIVATE_KEY='${{ secrets.FIRESTORE_PRIVATE_KEY }}' \
             --build-arg FIRESTORE_DATABASE_ID='${{ secrets.FIRESTORE_DATABASE_ID }}' \
-            --build-arg FIRESTORE_DATABASE_ID='${{ secrets.FIREBASE_DATABASE_URL }}' \
+            --build-arg FIREBASE_DATABASE_URL='${{ secrets.FIREBASE_DATABASE_URL }}' \
             --build-arg API_KEY=${{ env.API_KEY }} \
             --build-arg APP_NAME=${{ env.APP_NAME }} \
             -t ${{ env.DOCKER_IMAGE_URL }}:${{ github.sha }} \
