@@ -5,19 +5,20 @@ import { AppModule } from '../src/app.module';
 // supertest でHTTPリクエストを投げる
 import * as request from 'supertest';
 
-// テスト用ユーティリティ (Firestore に直接アクセスして確認したい場合)
-import * as admin from 'firebase-admin';
 import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { UpdateUserDto } from '../src/users/dto/update-user.dto';
 import { CreateProgramDto } from '../src/programs/dto/create-program.dto';
 import { CreateReservationDto } from '../src/reservations/dto/create-reservation.dto';
 import { VCDataDto, VCType, VCStatus } from '../src/vcs/dto/vc-data.dto';
+import { ValidationPipe } from '@nestjs/common';
+import { FirestoreProvider } from '../src/shared/firestore/firestore.provider';
+
+// テストのタイムアウトを30秒に延長
+jest.setTimeout(30000);
 
 describe('IntegrationE2E', () => {
   let app: INestApplication;
-
-  // Firestore Admin用: テスト内で直接コレクション確認したい場合 (オプション)
-  let firestore: FirebaseFirestore.Firestore;
+  let firestoreProvider: FirestoreProvider;
 
   // テストデータの定義
   const TEST_USERS = {
@@ -92,29 +93,32 @@ describe('IntegrationE2E', () => {
   };
 
   beforeAll(async () => {
-    // もしまだadmin.initializeAppしていないなら
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        projectId: process.env.FIRESTORE_PROJECT_ID, // "demo-project" など
-        // emulatorの場合はそれだけでOKか、またはhost/port指定
-      });
-    }
-    firestore = admin.firestore();
-
     // Nestのモジュール起動 (AppModule)
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-    // Nestアプリ生成
+    // Nestアプリ生成（本番と同じ設定を適用）
     app = moduleFixture.createNestApplication();
-    // テストに必要な設定 (ValidationPipeなど) があればここで
+
+    // バリデーションパイプの設定
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
+
     await app.init();
+
+    // FirestoreProviderを取得
+    firestoreProvider = app.get(FirestoreProvider);
   });
 
   afterAll(async () => {
-    // テスト終了後のクリーンアップ
     await app.close();
+    await new Promise((resolve) => setTimeout(resolve, 500));
   });
 
   describe('ユーザー登録とプログラム管理フロー', () => {
@@ -131,7 +135,8 @@ describe('IntegrationE2E', () => {
         .expect(201);
 
       // ユーザーの確認
-      const docUser = await firestore
+      const docUser = await firestoreProvider
+        .getFirestore()
         .collection('users')
         .doc(TEST_USERS.A.email)
         .get();
@@ -173,7 +178,8 @@ describe('IntegrationE2E', () => {
         .expect(201);
 
       // プログラムの確認
-      const docProgram = await firestore
+      const docProgram = await firestoreProvider
+        .getFirestore()
         .collection('programs')
         .doc(TEST_PROGRAMS.A.id)
         .get();
@@ -213,7 +219,8 @@ describe('IntegrationE2E', () => {
         .send(createProgramDto)
         .expect(201);
 
-      const docProgram = await firestore
+      const docProgram = await firestoreProvider
+        .getFirestore()
         .collection('programs')
         .doc(TEST_PROGRAMS.B.id)
         .get();
@@ -233,7 +240,8 @@ describe('IntegrationE2E', () => {
         .expect(201);
 
       // ユーザーの確認
-      const docUser = await firestore
+      const docUser = await firestoreProvider
+        .getFirestore()
         .collection('users')
         .doc(TEST_USERS.B.email)
         .get();
@@ -310,7 +318,8 @@ describe('IntegrationE2E', () => {
         .expect(201);
 
       // ユーザーの確認
-      const docUser = await firestore
+      const docUser = await firestoreProvider
+        .getFirestore()
         .collection('users')
         .doc(TEST_USERS.C.email)
         .get();
@@ -356,7 +365,8 @@ describe('IntegrationE2E', () => {
         .expect(201);
 
       // 予約の確認
-      const docResv = await firestore
+      const docResv = await firestoreProvider
+        .getFirestore()
         .collection('reservations')
         .doc(reservationId)
         .get();
@@ -406,7 +416,8 @@ describe('IntegrationE2E', () => {
         .expect(201);
 
       // 予約の確認
-      const docResv = await firestore
+      const docResv = await firestoreProvider
+        .getFirestore()
         .collection('reservations')
         .doc(reservationId)
         .get();

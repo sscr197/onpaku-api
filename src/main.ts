@@ -51,7 +51,10 @@ async function bootstrap() {
   const logger = await app.resolve(CustomLogger);
   app.useLogger(logger);
 
-  // FirestoreProvider を解決して初期化
+  // アプリケーションの初期化（全ライフサイクルフックを実行）
+  await app.init();
+
+  // FirestoreProvider を解決（この時点で onModuleInit がすでに実行されているので、this.db が正しくセットされているはず）
   const firestoreProvider = await app.resolve(FirestoreProvider);
 
   // 環境変数が正しくセットされているか（このログで秘密鍵なども確認）
