@@ -5,8 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { CustomLogger } from './shared/logger/custom.logger';
-import { FirestoreProvider } from './shared/firestore/firestore.provider'; // ← 追加
-import * as admin from 'firebase-admin';
+import { FirestoreProvider } from './shared/firestore/firestore.provider';
 
 function logEnvVariables(logger: CustomLogger): void {
   logger.log('----- Environment Variables -----');
@@ -23,9 +22,12 @@ function logEnvVariables(logger: CustomLogger): void {
   logger.log('----- End of Environment Variables -----\n');
 }
 
-async function checkFirebaseConnection(logger: CustomLogger) {
+async function checkFirebaseConnection(
+  logger: CustomLogger,
+  firestoreProvider: FirestoreProvider,
+) {
   try {
-    const db = admin.firestore();
+    const db = firestoreProvider.getFirestore();
     const collections = await db.listCollections();
     logger.log(
       'Firestore collections:',
@@ -49,22 +51,16 @@ async function bootstrap() {
   const logger = await app.resolve(CustomLogger);
   app.useLogger(logger);
 
-  // ここで FirestoreProvider を解決してインスタンス化する
-  await app.resolve(FirestoreProvider);
+  // FirestoreProvider を解決して初期化
+  const firestoreProvider = await app.resolve(FirestoreProvider);
 
-  // 開発環境の場合はデバッグログを有効化
-  if (process.env.NODE_ENV !== 'production') {
-    logger.setLogLevels(['debug', 'verbose', 'log', 'warn', 'error']);
-  } else {
-    // 本番環境では重要なログのみ
-    logger.setLogLevels(['log', 'warn', 'error']);
-  }
-
-  // 環境変数とFirebase接続の確認
+  // 環境変数が正しくセットされているか（このログで秘密鍵なども確認）
   logEnvVariables(logger);
-  await checkFirebaseConnection(logger);
 
-  // バリデーションパイプをグローバルに設定
+  // Firebase に接続できるか確認
+  await checkFirebaseConnection(logger, firestoreProvider);
+
+  // グローバルなバリデーションパイプ、エラーフィルター、インターセプターの設定
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -72,21 +68,16 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
-  // エラーフィルターをグローバルに設定
   app.useGlobalFilters(new HttpExceptionFilter());
-
-  // ロギングインターセプターをグローバルに設定
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  // Swagger設定
+  // Swagger 設定
   const config = new DocumentBuilder()
     .setTitle('Onpaku API')
     .setDescription('オンパクアプリケーションのAPI仕様書')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
