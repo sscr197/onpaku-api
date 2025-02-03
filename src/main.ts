@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { CustomLogger } from './shared/logger/custom.logger';
+import { FirestoreProvider } from './shared/firestore/firestore.provider'; // ← 追加
 import * as admin from 'firebase-admin';
 
 function logEnvVariables(logger: CustomLogger): void {
@@ -47,6 +48,9 @@ async function bootstrap() {
   // カスタムロガーを設定
   const logger = await app.resolve(CustomLogger);
   app.useLogger(logger);
+
+  // ここで FirestoreProvider を解決してインスタンス化する
+  await app.resolve(FirestoreProvider);
 
   // 開発環境の場合はデバッグログを有効化
   if (process.env.NODE_ENV !== 'production') {
