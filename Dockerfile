@@ -39,5 +39,4 @@ ENV NODE_ENV=$NODE_ENV \
 ENV PORT 8080
 
 # Run the web service on container startup.
-# CMD [ "npm", "start", "prod" ]
-CMD [ "node", "dist/debug-firebase.js" ]
+CMD [ "npm", "start", "prod" ]

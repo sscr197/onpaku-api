@@ -5,6 +5,42 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { CustomLogger } from './shared/logger/custom.logger';
+import * as admin from 'firebase-admin';
+
+function logEnvVariables(logger: CustomLogger): void {
+  logger.log('----- Environment Variables -----');
+  logger.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  logger.log(`PORT: ${process.env.PORT}`);
+  logger.log(`API_KEY: ${process.env.API_KEY}`);
+  logger.log(`APP_NAME: ${process.env.APP_NAME}`);
+  logger.log(`FIRESTORE_EMULATOR_HOST: ${process.env.FIRESTORE_EMULATOR_HOST}`);
+  logger.log(`FIRESTORE_PROJECT_ID: ${process.env.FIRESTORE_PROJECT_ID}`);
+  logger.log(
+    'FIRESTORE_CLIENT_EMAIL:',
+    process.env.FIRESTORE_CLIENT_EMAIL ? 'SET' : 'NOT SET',
+  );
+  logger.log(
+    'FIRESTORE_PRIVATE_KEY:',
+    process.env.FIRESTORE_PRIVATE_KEY ? 'SET' : 'NOT SET',
+  );
+  logger.log(`FIRESTORE_DATABASE_ID: ${process.env.FIRESTORE_DATABASE_ID}`);
+  logger.log(`FIREBASE_DATABASE_URL: ${process.env.FIREBASE_DATABASE_URL}`);
+  logger.log('----- End of Environment Variables -----\n');
+}
+
+async function checkFirebaseConnection(logger: CustomLogger) {
+  try {
+    const db = admin.firestore();
+    const collections = await db.listCollections();
+    logger.log(
+      'Firestore collections:',
+      collections.map((col) => col.id).join(', '),
+    );
+  } catch (error) {
+    logger.error('Error during Firestore access:', error);
+    throw error;
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -25,6 +61,10 @@ async function bootstrap() {
     // 本番環境では重要なログのみ
     logger.setLogLevels(['log', 'warn', 'error']);
   }
+
+  // 環境変数とFirebase接続の確認
+  logEnvVariables(logger);
+  await checkFirebaseConnection(logger);
 
   // バリデーションパイプをグローバルに設定
   app.useGlobalPipes(
