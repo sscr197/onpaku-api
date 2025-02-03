@@ -9,24 +9,33 @@ export class CustomLogger extends ConsoleLogger {
     });
   }
 
-  log(message: string, context?: string) {
-    super.log(message, context);
+  protected formatMessage(message: any, context?: string): string {
+    const timestamp = new Date().toISOString();
+    const contextStr = context ? `[${context}] ` : '';
+    const messageStr =
+      typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
+    return `${timestamp} ${contextStr}${messageStr}`;
   }
 
-  error(message: string, stack?: string, context?: string) {
-    super.error(message, stack, context);
+  log(message: any, context?: string) {
+    super.log(this.formatMessage(message, context));
   }
 
-  warn(message: string, context?: string) {
-    super.warn(message, context);
+  error(message: any, stack?: string, context?: string) {
+    const formattedMessage = this.formatMessage(message, context);
+    super.error(formattedMessage, stack);
   }
 
-  debug(message: string, context?: string) {
-    super.debug(message, context);
+  warn(message: any, context?: string) {
+    super.warn(this.formatMessage(message, context));
   }
 
-  verbose(message: string, context?: string) {
-    super.verbose(message, context);
+  debug(message: any, context?: string) {
+    super.debug(this.formatMessage(message, context));
+  }
+
+  verbose(message: any, context?: string) {
+    super.verbose(this.formatMessage(message, context));
   }
 
   setLogLevels(levels: LogLevel[]) {
