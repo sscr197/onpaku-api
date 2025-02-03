@@ -14,6 +14,14 @@ export class FirestoreProvider implements OnModuleInit {
   ) {}
 
   onModuleInit() {
+    // Firebase Admin SDKの状態をログ出力
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(
+        `admin.apps: ${JSON.stringify(admin.apps)}`,
+        'FirestoreProvider',
+      );
+    }
+
     // Firebase が初期化されていなければ
     if (admin.apps.length === 0) {
       const projectId = this.configService.get<string>('FIRESTORE_PROJECT_ID');
@@ -79,12 +87,31 @@ export class FirestoreProvider implements OnModuleInit {
           });
         }
       }
+    } else {
+      this.logger.warn(
+        'Firebase Admin SDK is already initialized. Using the existing app.',
+        'FirestoreProvider',
+      );
     }
 
     this.db = admin.firestore();
 
+    if (!this.db) {
+      this.logger.error(
+        'admin.firestore() returned undefined',
+        'FirestoreProvider',
+      );
+    } else {
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.debug(
+          'Firestore instance successfully retrieved',
+          'FirestoreProvider',
+        );
+      }
+    }
+
     const databaseId = this.configService.get<string>('FIRESTORE_DATABASE_ID');
-    if (databaseId) {
+    if (databaseId && this.db) {
       this.db.settings({
         databaseId,
         ignoreUndefinedProperties: true,
