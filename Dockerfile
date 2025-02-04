@@ -5,7 +5,6 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-
 # Install production dependencies.
 RUN npm ci --ignore-scripts --only=production
 
@@ -19,7 +18,6 @@ ARG FIRESTORE_CLIENT_EMAIL
 ARG FIRESTORE_PRIVATE_KEY
 ARG FIRESTORE_DATABASE_ID
 ARG FIREBASE_DATABASE_URL
-ARG API_KEY
 ARG APP_NAME
 
 # Set environment variables
@@ -30,9 +28,7 @@ ENV NODE_ENV=$NODE_ENV \
     FIRESTORE_PRIVATE_KEY=$FIRESTORE_PRIVATE_KEY \
     FIRESTORE_DATABASE_ID=$FIRESTORE_DATABASE_ID \
     FIREBASE_DATABASE_URL=$FIREBASE_DATABASE_URL \
-    API_KEY=$API_KEY \
     APP_NAME=$APP_NAME
-
 
 # Service must listen to $PORT environment variable.
 # This default value facilitates local development.

@@ -6,7 +6,6 @@ env:
   REGION: asia-northeast1
   DOCKER_IMAGE_URL: asia-northeast1-docker.pkg.dev/onpaku/api/onpaku-api
   APP_NAME: onpaku-api
-  API_KEY: onpaku-api
   FIRESTORE_DATABASE_ID: onpaku-db
   FIREBASE_DATABASE_URL: https://onpaku.firebaseio.com
 
@@ -45,7 +44,7 @@ jobs:
         env:
           NODE_ENV: test
           PORT: 3000
-          API_KEY: ${{ env.API_KEY }}
+          API_KEY: ${{ secrets.API_KEY }}
           FIRESTORE_PROJECT_ID: ${{ env.PROJECT_ID }}
           APP_NAME: ${{ env.APP_NAME }}
           FIRESTORE_CLIENT_EMAIL: ${{ secrets.FIRESTORE_CLIENT_EMAIL }}
@@ -78,7 +77,7 @@ jobs:
             --build-arg FIRESTORE_PRIVATE_KEY='${{ secrets.FIRESTORE_PRIVATE_KEY }}' \
             --build-arg FIRESTORE_DATABASE_ID='${{ env.FIRESTORE_DATABASE_ID }}' \
             --build-arg FIREBASE_DATABASE_URL='${{ env.FIREBASE_DATABASE_URL }}' \
-            --build-arg API_KEY=${{ env.API_KEY }} \
+            --build-arg API_KEY=${{ secrets.API_KEY }} \
             --build-arg APP_NAME=${{ env.APP_NAME }} \
             -t ${{ env.DOCKER_IMAGE_URL }}:${{ github.sha }} \
             -t ${{ env.DOCKER_IMAGE_URL }}:latest .
@@ -99,5 +98,5 @@ jobs:
             --set-env-vars="FIRESTORE_PRIVATE_KEY=${{ secrets.FIRESTORE_PRIVATE_KEY }}" \
             --set-env-vars="FIRESTORE_DATABASE_ID=${{ env.FIRESTORE_DATABASE_ID }}" \
             --set-env-vars="FIREBASE_DATABASE_URL=${{ env.FIREBASE_DATABASE_URL }}" \
-            --set-env-vars="API_KEY=${{ env.API_KEY }}" \
+            --set-env-vars="API_KEY=${{ secrets.API_KEY }}" \
             --set-env-vars="APP_NAME=${{ env.APP_NAME }}"
