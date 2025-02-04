@@ -51,6 +51,27 @@ async function bootstrap() {
   const logger = await app.resolve(CustomLogger);
   app.useLogger(logger);
 
+  // グローバルなバリデーションパイプ、エラーフィルター、インターセプターの設定
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
+  // Swagger設定
+  const config = new DocumentBuilder()
+    .setTitle('Onpaku API')
+    .setDescription('オンパクアプリケーションのAPI仕様書')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+
   // アプリケーションの初期化（全ライフサイクルフックを実行）
   await app.init();
 
@@ -63,29 +84,9 @@ async function bootstrap() {
   // Firebase に接続できるか確認
   await checkFirebaseConnection(logger, firestoreProvider);
 
-  // グローバルなバリデーションパイプ、エラーフィルター、インターセプターの設定
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new LoggingInterceptor());
-
-  // Swagger 設定
-  const config = new DocumentBuilder()
-    .setTitle('Onpaku API')
-    .setDescription('オンパクアプリケーションのAPI仕様書')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
-
   const port = process.env.PORT ?? 8080;
   await app.listen(port, '0.0.0.0');
   logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`Swagger UI is available at http://localhost:${port}/docs`);
 }
 bootstrap();
