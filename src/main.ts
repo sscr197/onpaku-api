@@ -67,7 +67,14 @@ async function bootstrap() {
     .setTitle('Onpaku API')
     .setDescription('オンパクアプリケーションのAPI仕様書')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'API_KEY',
+      },
+      'api-key',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
