@@ -1,0 +1,18 @@
+# Development stage
+FROM node:20-bullseye-slim
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install all dependencies (including devDependencies)
+RUN npm ci
+
+# Copy local code to the container image.
+COPY . .
+
+# Service must listen to $PORT environment variable.
+ENV PORT 3000
+
+# Run the web service on container startup in development mode
+CMD [ "npm", "run", "start:dev" ] 
