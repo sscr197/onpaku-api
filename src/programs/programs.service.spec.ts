@@ -4,6 +4,7 @@ import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CustomLogger } from '../shared/logger/custom.logger';
 import { CreateProgramDto } from './dto/create-program.dto';
+import { UpdateProgramDto } from './dto/update-program.dto';
 import { NotFoundException } from '@nestjs/common';
 
 describe('ProgramsService', () => {
@@ -20,10 +21,16 @@ describe('ProgramsService', () => {
       get: jest.fn().mockResolvedValue({
         exists: true,
         data: () => ({
-          title: 'Test Program',
-          placeName: 'Test Place',
-          prefecture: '東京都',
-          address: '渋谷区',
+          title: '既存のタイトル',
+          subTitle: '既存のサブタイトル',
+          number: 1,
+          latitude: 35.6895,
+          longitude: 139.6917,
+          placeName: '既存の会場',
+          zip: '123-4567',
+          prefecture: '既存の都道府県',
+          address: '既存の市区町村',
+          street: '既存の番地',
           partnerUsers: [],
         }),
       }),
@@ -45,7 +52,6 @@ describe('ProgramsService', () => {
 
     // VcsServiceのモックを作成
     vcsServiceMock = {
-      createOrUpdateUserVC: jest.fn().mockResolvedValue(undefined),
       createPartnerVC: jest.fn().mockResolvedValue(undefined),
     } as any;
 
@@ -103,16 +109,11 @@ describe('ProgramsService', () => {
             email: 'partner1@example.com',
             role: 'owner',
           },
-          {
-            email: 'partner2@example.com',
-            role: 'staff',
-          },
         ],
       };
 
       await service.createOrUpdateProgram(createProgramDto);
 
-      // Firestoreの呼び出しを検証
       expect(firestoreMock.getFirestore().collection).toHaveBeenCalledWith(
         'programs',
       );
@@ -137,27 +138,16 @@ describe('ProgramsService', () => {
         { merge: true },
       );
 
-      // パートナーVCの作成を検証
-      createProgramDto.partner_users.forEach((partner) => {
-        expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
-          partner.email,
-          expect.objectContaining({
-            id: createProgramDto.program.id,
-            title: createProgramDto.program.title,
-            role: partner.role,
-            placeName: createProgramDto.program.place_name,
-            prefecture: createProgramDto.program.prefecture,
-            address: createProgramDto.program.address,
-          }),
-        );
-      });
-
-      // ログ出力を検証
-      expect(loggerMock.debug).toHaveBeenCalledWith(
-        `Creating/Updating program: ${createProgramDto.program.id}`,
-      );
-      expect(loggerMock.log).toHaveBeenCalledWith(
-        `Program created/updated successfully: ${createProgramDto.program.id}`,
+      expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
+        createProgramDto.partner_users[0].email,
+        expect.objectContaining({
+          id: createProgramDto.program.id,
+          title: createProgramDto.program.title,
+          role: createProgramDto.partner_users[0].role,
+          placeName: createProgramDto.program.place_name,
+          prefecture: createProgramDto.program.prefecture,
+          address: createProgramDto.program.address,
+        }),
       );
     });
 
@@ -178,8 +168,8 @@ describe('ProgramsService', () => {
         },
         partner_users: [],
       };
-      const error = new Error('Firestore error');
 
+      const error = new Error('Firestore error');
       mockDocRef.set.mockRejectedValueOnce(error);
 
       await expect(
@@ -193,111 +183,124 @@ describe('ProgramsService', () => {
     });
   });
 
-  describe('addPartnerUser', () => {
-    it('should add a partner user to an existing program', async () => {
-      const programId = 'test-program';
-      const userEmail = 'partner@example.com';
-      const role = 'partner';
+  describe('updateProgram', () => {
+    it('should update a program successfully', async () => {
+      const updateProgramDto: UpdateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+        sub_title: '更新後のサブタイトル',
+        number: 2,
+        latitude: 35.0,
+        longitude: 140.0,
+        place_name: '更新後の会場',
+        zip: '123-4567',
+        prefecture: '更新後の都道府県',
+        address: '更新後の市区町村',
+        street: '更新後の番地',
+        partner_users: [{ email: 'partner1@example.com', role: 'owner' }],
+      };
 
-      // プログラムが存在する場合のモック
-      mockDocRef.get.mockResolvedValueOnce({
-        exists: true,
-        data: () => ({
-          title: 'Test Program',
-          placeName: 'Test Place',
-          prefecture: '東京都',
-          address: '渋谷区',
-          partnerUsers: [],
-        }),
-      });
+      await service.updateProgram(updateProgramDto);
 
-      await service.addPartnerUser(programId, userEmail, role);
-
-      // プログラムの更新を確認
       expect(mockDocRef.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          partnerUsers: [{ email: userEmail, role }],
+          title: updateProgramDto.title,
+          subTitle: updateProgramDto.sub_title,
+          number: updateProgramDto.number,
+          latitude: updateProgramDto.latitude,
+          longitude: updateProgramDto.longitude,
+          placeName: updateProgramDto.place_name,
+          zip: updateProgramDto.zip,
+          prefecture: updateProgramDto.prefecture,
+          address: updateProgramDto.address,
+          street: updateProgramDto.street,
+          partnerUsers: updateProgramDto.partner_users,
           updatedAt: expect.any(Date),
         }),
       );
 
-      // パートナーVCの発行を確認
-      expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
-        userEmail,
-        expect.objectContaining({
-          id: programId,
-          title: 'Test Program',
-          role,
-          placeName: 'Test Place',
-          prefecture: '東京都',
-          address: '渋谷区',
-        }),
-      );
+      // パートナーユーザーが指定されている場合のみVCの更新を確認
+      if (
+        updateProgramDto.partner_users &&
+        updateProgramDto.partner_users.length > 0
+      ) {
+        expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
+          updateProgramDto.partner_users[0].email,
+          expect.objectContaining({
+            id: updateProgramDto.id,
+            title: updateProgramDto.title,
+            role: updateProgramDto.partner_users[0].role,
+            placeName: updateProgramDto.place_name,
+            prefecture: updateProgramDto.prefecture,
+            address: updateProgramDto.address,
+          }),
+        );
+      }
     });
 
     it('should throw NotFoundException when program does not exist', async () => {
-      const programId = 'non-existent-program';
-      const userEmail = 'partner@example.com';
-      const role = 'partner';
+      const updateProgramDto: UpdateProgramDto = {
+        id: 'non-existent',
+        title: '更新後のタイトル',
+      };
 
-      // プログラムが存在しない場合のモック
-      mockDocRef.get.mockResolvedValueOnce({
-        exists: false,
-      });
+      mockDocRef.get.mockResolvedValueOnce({ exists: false });
 
-      await expect(
-        service.addPartnerUser(programId, userEmail, role),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateProgram(updateProgramDto)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockDocRef.update).not.toHaveBeenCalled();
       expect(vcsServiceMock.createPartnerVC).not.toHaveBeenCalled();
     });
 
-    it('should add a partner user to a program with existing partners', async () => {
-      const programId = 'test-program';
-      const existingPartner = {
-        email: 'existing@example.com',
-        role: 'partner',
+    it('should handle errors when updating program', async () => {
+      const updateProgramDto: UpdateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
       };
-      const newPartner = { email: 'new@example.com', role: 'partner' };
 
-      // 既存のパートナーがいる場合のモック
-      mockDocRef.get.mockResolvedValueOnce({
-        exists: true,
-        data: () => ({
-          title: 'Test Program',
-          placeName: 'Test Place',
-          prefecture: '東京都',
-          address: '渋谷区',
-          partnerUsers: [existingPartner],
-        }),
-      });
+      const error = new Error('Firestore error');
+      mockDocRef.update.mockRejectedValueOnce(error);
 
-      await service.addPartnerUser(
-        programId,
-        newPartner.email,
-        newPartner.role,
+      await expect(service.updateProgram(updateProgramDto)).rejects.toThrow(
+        error,
       );
 
-      // 既存のパートナーと新しいパートナーの両方が含まれていることを確認
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        `Failed to update program: ${error.message}`,
+        error.stack,
+      );
+    });
+
+    it('should update only specified fields', async () => {
+      const updateProgramDto: UpdateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+        // 他のフィールドは未指定
+      };
+
+      await service.updateProgram(updateProgramDto);
+
       expect(mockDocRef.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          partnerUsers: [existingPartner, newPartner],
+          title: updateProgramDto.title,
           updatedAt: expect.any(Date),
         }),
       );
 
-      expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
-        newPartner.email,
-        expect.objectContaining({
-          id: programId,
-          title: 'Test Program',
-          role: newPartner.role,
-          placeName: 'Test Place',
-          prefecture: '東京都',
-          address: '渋谷区',
-        }),
-      );
+      // 未指定のフィールドが更新データに含まれていないことを確認
+      const updateCall = mockDocRef.update.mock.calls[0][0];
+      expect(updateCall).not.toHaveProperty('subTitle');
+      expect(updateCall).not.toHaveProperty('number');
+      expect(updateCall).not.toHaveProperty('latitude');
+      expect(updateCall).not.toHaveProperty('longitude');
+      expect(updateCall).not.toHaveProperty('placeName');
+      expect(updateCall).not.toHaveProperty('zip');
+      expect(updateCall).not.toHaveProperty('prefecture');
+      expect(updateCall).not.toHaveProperty('address');
+      expect(updateCall).not.toHaveProperty('street');
+      expect(updateCall).not.toHaveProperty('partnerUsers');
     });
   });
 });

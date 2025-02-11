@@ -5,6 +5,7 @@ import { CustomLogger } from '../shared/logger/custom.logger';
 import { ConfigService } from '@nestjs/config';
 import { ApiKeyGuard } from '../shared/guards/api-key.guard';
 import { CreateProgramDto } from './dto/create-program.dto';
+import { UpdateProgramDto } from './dto/update-program.dto';
 
 describe('ProgramsController', () => {
   let controller: ProgramsController;
@@ -14,8 +15,8 @@ describe('ProgramsController', () => {
   beforeEach(async () => {
     serviceMock = {
       createOrUpdateProgram: jest.fn(),
-      firestore: {} as any,
-      logger: {} as any,
+      updateProgram: jest.fn(),
+      addPartnerUser: jest.fn(),
     } as unknown as jest.Mocked<ProgramsService>;
 
     loggerMock = {
@@ -69,21 +70,24 @@ describe('ProgramsController', () => {
       const createProgramDto: CreateProgramDto = {
         program: {
           id: 'program1',
-          title: 'Test Program',
-          sub_title: 'Test Subtitle',
+          title: 'テストプログラム',
+          sub_title: 'サブタイトル',
           number: 1,
           latitude: 35.6895,
           longitude: 139.6917,
-          place_name: 'Test Place',
+          place_name: 'テスト会場',
           zip: '123-4567',
-          prefecture: 'Tokyo',
-          address: 'Shibuya',
+          prefecture: '東京都',
+          address: '渋谷区',
           street: '1-1-1',
         },
-        partner_users: [],
+        partner_users: [
+          {
+            email: 'partner1@example.com',
+            role: 'owner',
+          },
+        ],
       };
-
-      serviceMock.createOrUpdateProgram.mockResolvedValue(undefined);
 
       await controller.createOrUpdateProgram(createProgramDto);
 
@@ -95,19 +99,19 @@ describe('ProgramsController', () => {
       );
     });
 
-    it('should handle errors when creating or updating program', async () => {
+    it('should handle errors when creating/updating program', async () => {
       const createProgramDto: CreateProgramDto = {
         program: {
           id: 'program1',
-          title: 'Test Program',
-          sub_title: 'Test Subtitle',
+          title: 'テストプログラム',
+          sub_title: 'サブタイトル',
           number: 1,
           latitude: 35.6895,
           longitude: 139.6917,
-          place_name: 'Test Place',
+          place_name: 'テスト会場',
           zip: '123-4567',
-          prefecture: 'Tokyo',
-          address: 'Shibuya',
+          prefecture: '東京都',
+          address: '渋谷区',
           street: '1-1-1',
         },
         partner_users: [],
@@ -122,6 +126,51 @@ describe('ProgramsController', () => {
 
       expect(loggerMock.error).toHaveBeenCalledWith(
         `Failed to create/update program: ${error.message}`,
+        error.stack,
+      );
+    });
+  });
+
+  describe('updateProgram', () => {
+    it('should update a program successfully', async () => {
+      const updateProgramDto: UpdateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+        sub_title: '更新後のサブタイトル',
+        number: 2,
+        latitude: 35.0,
+        longitude: 140.0,
+        place_name: '更新後の会場',
+        zip: '123-4567',
+        prefecture: '更新後の都道府県',
+        address: '更新後の市区町村',
+        street: '更新後の番地',
+        partner_users: [{ email: 'partner1@example.com', role: 'owner' }],
+      };
+
+      await controller.updateProgram(updateProgramDto);
+
+      expect(serviceMock.updateProgram).toHaveBeenCalledWith(updateProgramDto);
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        `Received request to update program: ${updateProgramDto.id}`,
+      );
+    });
+
+    it('should handle errors when updating program', async () => {
+      const updateProgramDto: UpdateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+      };
+
+      const error = new Error('Service error');
+      serviceMock.updateProgram.mockRejectedValue(error);
+
+      await expect(controller.updateProgram(updateProgramDto)).rejects.toThrow(
+        error,
+      );
+
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        `Failed to update program: ${error.message}`,
         error.stack,
       );
     });

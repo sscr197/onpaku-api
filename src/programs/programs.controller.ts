@@ -1,6 +1,16 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Patch,
+  Get,
+  Param,
+} from '@nestjs/common';
 import { ProgramsService } from './programs.service';
 import { CreateProgramDto } from './dto/create-program.dto';
+import { UpdateProgramDto } from './dto/update-program.dto';
+import { ProgramResponseDto } from './dto/program-response.dto';
 import { ApiKeyGuard } from '../shared/guards/api-key.guard';
 import {
   ApiTags,
@@ -59,6 +69,68 @@ export class ProgramsController {
         `Failed to create/update program: ${error.message}`,
         error.stack,
       );
+      throw error;
+    }
+  }
+
+  @Patch()
+  @ApiOperation({
+    summary: 'プログラム情報更新',
+    description: '指定されたプログラムIDの情報を更新します。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'プログラムの更新に成功しました。',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'リクエストデータが不正です。',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'APIキーが無効か、認証に失敗しました。',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '指定されたプログラムが見つかりません。',
+  })
+  async updateProgram(
+    @Body() updateProgramDto: UpdateProgramDto,
+  ): Promise<void> {
+    this.logger.debug(
+      `Received request to update program: ${updateProgramDto.id}`,
+    );
+    try {
+      await this.programsService.updateProgram(updateProgramDto);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update program: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'プログラム情報取得',
+    description: '指定したプログラムIDの情報を取得します。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'プログラム情報の取得に成功しました。',
+    type: ProgramResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '指定されたプログラムが見つかりません。',
+  })
+  async getProgram(@Param('id') id: string): Promise<ProgramResponseDto> {
+    this.logger.debug(`Received request to get program: ${id}`);
+    try {
+      return await this.programsService.findProgramById(id);
+    } catch (error) {
+      this.logger.error(`Failed to get program: ${error.message}`, error.stack);
       throw error;
     }
   }
