@@ -64,7 +64,7 @@ export class FirestoreProvider implements OnModuleInit {
     }
 
     // development環境の場合はエミュレーターを使用
-    if (nodeEnv === 'development') {
+    if (nodeEnv === 'development' || nodeEnv === 'test') {
       const emulatorHost =
         this.configService.get<string>('FIRESTORE_EMULATOR_HOST') ||
         'localhost:8080';
