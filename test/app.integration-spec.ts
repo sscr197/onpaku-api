@@ -1,25 +1,14 @@
 // test/integration/e2e.integration-spec.ts
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { AppModule } from '../src/app.module';
-// supertest でHTTPリクエストを投げる
 import * as request from 'supertest';
-
-import { CreateUserDto } from '../src/users/dto/create-user.dto';
-import { UpdateUserDto } from '../src/users/dto/update-user.dto';
-import { CreateProgramDto } from '../src/programs/dto/create-program.dto';
-import { CreateReservationDto } from '../src/reservations/dto/create-reservation.dto';
 import { VCDataDto, VCType, VCStatus } from '../src/vcs/dto/vc-data.dto';
-import { ValidationPipe } from '@nestjs/common';
-import { FirestoreProvider } from '../src/shared/firestore/firestore.provider';
 
 // テストのタイムアウトを30秒に延長
 jest.setTimeout(30000);
 
-describe('IntegrationE2E', () => {
-  let app: INestApplication;
-  let firestoreProvider: FirestoreProvider;
+const API_URL = 'http://localhost:3000';
+const API_KEY = 'your-api-key';
 
+describe('IntegrationE2E', () => {
   // テストデータの定義
   const TEST_USERS = {
     A: {
@@ -92,60 +81,44 @@ describe('IntegrationE2E', () => {
     },
   };
 
-  beforeAll(async () => {
-    // Nestのモジュール起動 (AppModule)
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    // Nestアプリ生成（本番と同じ設定を適用）
-    app = moduleFixture.createNestApplication();
-
-    // バリデーションパイプの設定
-    app.useGlobalPipes(
-      new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    );
-
-    await app.init();
-
-    // FirestoreProviderを取得
-    firestoreProvider = app.get(FirestoreProvider);
-  });
-
-  afterAll(async () => {
-    await app.close();
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  });
-
   describe('ユーザー登録とプログラム管理フロー', () => {
     it('1) ユーザーAを登録', async () => {
-      const payload: CreateUserDto = {
+      const payload = {
         ...TEST_USERS.A,
         management_programs: [],
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/users')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(payload)
         .expect(201);
 
       // ユーザーの確認
-      const docUser = await firestoreProvider
-        .getFirestore()
-        .collection('users')
-        .doc(TEST_USERS.A.email)
-        .get();
-      expect(docUser.exists).toBe(true);
+      const resUser = await request(API_URL)
+        .get(`/api/v1/onpaku/users/${TEST_USERS.A.email}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resUser.body).toMatchObject({
+        id: TEST_USERS.A.id,
+        email: TEST_USERS.A.email,
+        family_name: TEST_USERS.A.family_name,
+        first_name: TEST_USERS.A.first_name,
+        birth_year: TEST_USERS.A.birth_year,
+        gender: TEST_USERS.A.gender,
+        zip: TEST_USERS.A.zip,
+        prefecture: TEST_USERS.A.prefecture,
+        address: TEST_USERS.A.address,
+        street: TEST_USERS.A.street,
+        tel: TEST_USERS.A.tel,
+        management_programs: [],
+      });
 
       // VCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.A.email })
         .expect(200);
 
@@ -161,7 +134,7 @@ describe('IntegrationE2E', () => {
     });
 
     it('2) プログラムAを登録（パートナー：ユーザーA）', async () => {
-      const createProgramDto: CreateProgramDto = {
+      const createProgramDto = {
         program: TEST_PROGRAMS.A,
         partner_users: [
           {
@@ -171,24 +144,36 @@ describe('IntegrationE2E', () => {
         ],
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(createProgramDto)
         .expect(201);
 
       // プログラムの確認
-      const docProgram = await firestoreProvider
-        .getFirestore()
-        .collection('programs')
-        .doc(TEST_PROGRAMS.A.id)
-        .get();
-      expect(docProgram.exists).toBe(true);
+      const resProgram = await request(API_URL)
+        .get(`/api/v1/onpaku/programs/${TEST_PROGRAMS.A.id}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resProgram.body).toMatchObject({
+        id: TEST_PROGRAMS.A.id,
+        title: TEST_PROGRAMS.A.title,
+        sub_title: TEST_PROGRAMS.A.sub_title,
+        number: TEST_PROGRAMS.A.number,
+        latitude: TEST_PROGRAMS.A.latitude,
+        longitude: TEST_PROGRAMS.A.longitude,
+        place_name: TEST_PROGRAMS.A.place_name,
+        zip: TEST_PROGRAMS.A.zip,
+        prefecture: TEST_PROGRAMS.A.prefecture,
+        address: TEST_PROGRAMS.A.address,
+        street: TEST_PROGRAMS.A.street,
+      });
 
       // パートナーVCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.A.email })
         .expect(200);
 
@@ -208,49 +193,74 @@ describe('IntegrationE2E', () => {
     });
 
     it('3) プログラムBを登録（パートナーなし）', async () => {
-      const createProgramDto: CreateProgramDto = {
+      const createProgramDto = {
         program: TEST_PROGRAMS.B,
         partner_users: [],
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/programs')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(createProgramDto)
         .expect(201);
 
-      const docProgram = await firestoreProvider
-        .getFirestore()
-        .collection('programs')
-        .doc(TEST_PROGRAMS.B.id)
-        .get();
-      expect(docProgram.exists).toBe(true);
+      const resProgram = await request(API_URL)
+        .get(`/api/v1/onpaku/programs/${TEST_PROGRAMS.B.id}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resProgram.body).toMatchObject({
+        id: TEST_PROGRAMS.B.id,
+        title: TEST_PROGRAMS.B.title,
+        sub_title: TEST_PROGRAMS.B.sub_title,
+        number: TEST_PROGRAMS.B.number,
+        latitude: TEST_PROGRAMS.B.latitude,
+        longitude: TEST_PROGRAMS.B.longitude,
+        place_name: TEST_PROGRAMS.B.place_name,
+        zip: TEST_PROGRAMS.B.zip,
+        prefecture: TEST_PROGRAMS.B.prefecture,
+        address: TEST_PROGRAMS.B.address,
+        street: TEST_PROGRAMS.B.street,
+      });
     });
 
     it('4) ユーザーBを登録', async () => {
-      const payload: CreateUserDto = {
+      const payload = {
         ...TEST_USERS.B,
         management_programs: [],
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/users')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(payload)
         .expect(201);
 
       // ユーザーの確認
-      const docUser = await firestoreProvider
-        .getFirestore()
-        .collection('users')
-        .doc(TEST_USERS.B.email)
-        .get();
-      expect(docUser.exists).toBe(true);
+      const resUser = await request(API_URL)
+        .get(`/api/v1/onpaku/users/${TEST_USERS.B.email}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resUser.body).toMatchObject({
+        id: TEST_USERS.B.id,
+        email: TEST_USERS.B.email,
+        family_name: TEST_USERS.B.family_name,
+        first_name: TEST_USERS.B.first_name,
+        birth_year: TEST_USERS.B.birth_year,
+        gender: TEST_USERS.B.gender,
+        zip: TEST_USERS.B.zip,
+        prefecture: TEST_USERS.B.prefecture,
+        address: TEST_USERS.B.address,
+        street: TEST_USERS.B.street,
+        tel: TEST_USERS.B.tel,
+        management_programs: [],
+      });
 
       // VCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.B.email })
         .expect(200);
 
@@ -266,7 +276,7 @@ describe('IntegrationE2E', () => {
     });
 
     it('5) ユーザーBをアップデート（プログラムBのパートナーに追加）', async () => {
-      const payload: UpdateUserDto = {
+      const payload = {
         id: TEST_USERS.B.id,
         email: TEST_USERS.B.email,
         management_programs: [
@@ -277,16 +287,16 @@ describe('IntegrationE2E', () => {
         ],
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .patch('/api/v1/onpaku/users')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(payload)
         .expect(200);
 
       // パートナーVCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.B.email })
         .expect(200);
 
@@ -306,29 +316,42 @@ describe('IntegrationE2E', () => {
     });
 
     it('6) ユーザーCを登録', async () => {
-      const payload: CreateUserDto = {
+      const payload = {
         ...TEST_USERS.C,
         management_programs: [],
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/users')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(payload)
         .expect(201);
 
       // ユーザーの確認
-      const docUser = await firestoreProvider
-        .getFirestore()
-        .collection('users')
-        .doc(TEST_USERS.C.email)
-        .get();
-      expect(docUser.exists).toBe(true);
+      const resUser = await request(API_URL)
+        .get(`/api/v1/onpaku/users/${TEST_USERS.C.email}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resUser.body).toMatchObject({
+        id: TEST_USERS.C.id,
+        email: TEST_USERS.C.email,
+        family_name: TEST_USERS.C.family_name,
+        first_name: TEST_USERS.C.first_name,
+        birth_year: TEST_USERS.C.birth_year,
+        gender: TEST_USERS.C.gender,
+        zip: TEST_USERS.C.zip,
+        prefecture: TEST_USERS.C.prefecture,
+        address: TEST_USERS.C.address,
+        street: TEST_USERS.C.street,
+        tel: TEST_USERS.C.tel,
+        management_programs: [],
+      });
 
       // VCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -345,7 +368,7 @@ describe('IntegrationE2E', () => {
 
     it('7) ユーザーCがプログラムAを予約', async () => {
       const reservationId = 'reservation-a-123';
-      const payload: CreateReservationDto = {
+      const payload = {
         reservation_id: reservationId,
         email: TEST_USERS.C.email,
         execution: {
@@ -358,24 +381,35 @@ describe('IntegrationE2E', () => {
         },
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/reservations')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(payload)
         .expect(201);
 
       // 予約の確認
-      const docResv = await firestoreProvider
-        .getFirestore()
-        .collection('reservations')
-        .doc(reservationId)
-        .get();
-      expect(docResv.exists).toBe(true);
+      const resResv = await request(API_URL)
+        .get(`/api/v1/onpaku/reservations/${reservationId}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resResv.body).toMatchObject({
+        reservation_id: reservationId,
+        email: TEST_USERS.C.email,
+        execution: {
+          id: 'exec-a-1',
+          program_id: TEST_PROGRAMS.A.id,
+          start_time: expect.any(String),
+          end_time: expect.any(String),
+          capacity: 30,
+          price: 5000,
+        },
+      });
 
       // イベントVCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -396,7 +430,7 @@ describe('IntegrationE2E', () => {
 
     it('8) ユーザーCがプログラムBを予約', async () => {
       const reservationId = 'reservation-b-456';
-      const payload: CreateReservationDto = {
+      const payload = {
         reservation_id: reservationId,
         email: TEST_USERS.C.email,
         execution: {
@@ -409,24 +443,35 @@ describe('IntegrationE2E', () => {
         },
       };
 
-      await request(app.getHttpServer())
+      await request(API_URL)
         .post('/api/v1/onpaku/reservations')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .send(payload)
         .expect(201);
 
       // 予約の確認
-      const docResv = await firestoreProvider
-        .getFirestore()
-        .collection('reservations')
-        .doc(reservationId)
-        .get();
-      expect(docResv.exists).toBe(true);
+      const resResv = await request(API_URL)
+        .get(`/api/v1/onpaku/reservations/${reservationId}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resResv.body).toMatchObject({
+        reservation_id: reservationId,
+        email: TEST_USERS.C.email,
+        execution: {
+          id: 'exec-b-1',
+          program_id: TEST_PROGRAMS.B.id,
+          start_time: '2025-05-02T10:00:00+09:00',
+          end_time: '2025-05-02T12:00:00+09:00',
+          capacity: 30,
+          price: 5000,
+        },
+      });
 
       // イベントVCの確認
-      const resVC = await request(app.getHttpServer())
+      const resVC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -451,9 +496,9 @@ describe('IntegrationE2E', () => {
 
     it('9) 各ユーザーのVCステータスを確認', async () => {
       // ユーザーAのVC確認
-      const resA = await request(app.getHttpServer())
+      const resA = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.A.email })
         .expect(200);
 
@@ -472,9 +517,9 @@ describe('IntegrationE2E', () => {
       );
 
       // ユーザーBのVC確認
-      const resB = await request(app.getHttpServer())
+      const resB = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.B.email })
         .expect(200);
 
@@ -493,9 +538,9 @@ describe('IntegrationE2E', () => {
       );
 
       // ユーザーCのVC確認
-      const resC = await request(app.getHttpServer())
+      const resC = await request(API_URL)
         .get('/api/v1/onpaku/vcs/pending')
-        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
         .query({ email: TEST_USERS.C.email })
         .expect(200);
 
@@ -513,6 +558,115 @@ describe('IntegrationE2E', () => {
           expect.objectContaining({
             type: VCType.Event,
             status: VCStatus.Pending,
+          }),
+        ]),
+      );
+    });
+
+    it('10) パートナーなしでプログラムを登録し、VCが発行されていないことを確認', async () => {
+      const programId = 'program-no-partner';
+      const createProgramDto = {
+        program: {
+          id: programId,
+          title: 'パートナーなしプログラム',
+          sub_title: 'サブタイトル',
+          number: 3,
+          latitude: 35.6895,
+          longitude: 139.6917,
+          place_name: '会場C',
+          zip: '123-4567',
+          prefecture: '東京都',
+          address: '港区',
+          street: '3-3-3',
+        },
+        partner_users: [], // パートナーなし
+      };
+
+      // プログラムを登録
+      await request(API_URL)
+        .post('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .send(createProgramDto)
+        .expect(201);
+
+      // プログラムが作成されたことを確認
+      const resProgram = await request(API_URL)
+        .get(`/api/v1/onpaku/programs/${programId}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resProgram.body).toMatchObject({
+        id: programId,
+        title: 'パートナーなしプログラム',
+        partnerUsers: [],
+      });
+
+      // VCが発行されていないことを確認（既存のユーザーで確認）
+      const resVC = await request(API_URL)
+        .get('/api/v1/onpaku/vcs/pending')
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .query({ email: TEST_USERS.A.email })
+        .expect(200);
+
+      const vcs = resVC.body as VCDataDto[];
+      // 既存のVCのみが存在することを確認（新しいパートナーVCが発行されていないこと）
+      expect(vcs).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: VCType.Partner,
+            status: VCStatus.Pending,
+            programId: programId,
+          }),
+        ]),
+      );
+    });
+
+    it('11) PATCHでパートナーを追加し、VCが発行されることを確認', async () => {
+      const programId = 'program-no-partner';
+      const updateProgramDto = {
+        id: programId,
+        partner_users: [
+          {
+            email: TEST_USERS.A.email,
+            role: 'owner',
+          },
+        ],
+      };
+
+      // プログラムを更新
+      await request(API_URL)
+        .patch('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .send(updateProgramDto)
+        .expect(200);
+
+      // プログラムが更新されたことを確認
+      const resProgram = await request(API_URL)
+        .get(`/api/v1/onpaku/programs/${programId}`)
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .expect(200);
+
+      expect(resProgram.body).toMatchObject({
+        id: programId,
+        partnerUsers: updateProgramDto.partner_users,
+      });
+
+      // パートナーVCが発行されたことを確認
+      const resVC = await request(API_URL)
+        .get('/api/v1/onpaku/vcs/pending')
+        .set('Authorization', `Bearer ${API_KEY}`)
+        .query({ email: TEST_USERS.A.email })
+        .expect(200);
+
+      const vcs = resVC.body as VCDataDto[];
+      expect(vcs).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: VCType.Partner,
+            status: VCStatus.Pending,
+            vcData: expect.objectContaining({
+              id: programId,
+            }),
           }),
         ]),
       );
