@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { ReservationResponseDto } from './dto/reservation-response.dto';
 import { CustomLogger } from '../shared/logger/custom.logger';
 
 @Injectable()
@@ -57,6 +58,50 @@ export class ReservationsService {
       }
       this.logger.error(
         `Failed to create reservation: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async findReservationById(
+    reservationId: string,
+  ): Promise<ReservationResponseDto> {
+    this.logger.debug(`Finding reservation by id: ${reservationId}`);
+    try {
+      const reservationRef = this.firestore
+        .getFirestore()
+        .collection('reservations')
+        .doc(reservationId);
+      const doc = await reservationRef.get();
+      if (!doc.exists) {
+        throw new NotFoundException(`Reservation ${reservationId} not found`);
+      }
+      const data = doc.data();
+
+      // タイムゾーンを考慮した日時フォーマット
+      const formatDate = (date: FirebaseFirestore.Timestamp) => {
+        const d = date.toDate();
+        const offset = 9 * 60; // JST (+9:00)
+        const localDate = new Date(d.getTime() + offset * 60 * 1000);
+        return localDate.toISOString().replace('.000Z', '+09:00');
+      };
+
+      return {
+        reservation_id: doc.id,
+        email: data?.userEmail,
+        execution: {
+          id: data?.executionId,
+          program_id: data?.programId,
+          start_time: formatDate(data?.startTime),
+          end_time: formatDate(data?.endTime),
+          capacity: data?.capacity,
+          price: data?.price,
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to find reservation by id: ${error.message}`,
         error.stack,
       );
       throw error;
