@@ -1,7 +1,16 @@
-import { Controller, Post, Patch, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Body,
+  UseGuards,
+  Get,
+  Param,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import { ApiKeyGuard } from '../shared/guards/api-key.guard';
 import {
   ApiTags,
@@ -89,6 +98,30 @@ export class UsersController {
       await this.usersService.updateUser(updateUserDto);
     } catch (error) {
       this.logger.error(`Failed to update user: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  @Get(':email')
+  @ApiOperation({
+    summary: 'ユーザー情報取得',
+    description: '指定したメールアドレスのユーザー情報を取得します。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'ユーザー情報の取得に成功しました。',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '指定されたメールアドレスのユーザーが見つかりません。',
+  })
+  async getUser(@Param('email') email: string): Promise<UserResponseDto> {
+    this.logger.debug(`Received request to get user: ${email}`);
+    try {
+      return await this.usersService.findUserByEmail(email);
+    } catch (error) {
+      this.logger.error(`Failed to get user: ${error.message}`, error.stack);
       throw error;
     }
   }

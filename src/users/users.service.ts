@@ -3,6 +3,7 @@ import { FirestoreProvider } from '../shared/firestore/firestore.provider';
 import { VcsService } from '../vcs/vcs.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import { CustomLogger } from '../shared/logger/custom.logger';
 import { ProgramsService } from '../programs/programs.service';
 
@@ -124,6 +125,41 @@ export class UsersService {
         throw error;
       }
       this.logger.error(`Failed to update user: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async findUserByEmail(email: string): Promise<UserResponseDto> {
+    this.logger.debug(`Finding user by email: ${email}`);
+    try {
+      const userRef = this.firestore
+        .getFirestore()
+        .collection('users')
+        .doc(email);
+      const doc = await userRef.get();
+      if (!doc.exists) {
+        throw new NotFoundException(`User ${email} not found`);
+      }
+      const data = doc.data();
+      return {
+        id: data?.onpakuUserId,
+        email: doc.id,
+        family_name: data?.familyName,
+        first_name: data?.firstName,
+        birth_year: data?.birthYear,
+        gender: data?.gender,
+        zip: data?.zip,
+        prefecture: data?.prefecture,
+        address: data?.address,
+        street: data?.street,
+        tel: data?.tel,
+        management_programs: data?.managementPrograms || [],
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to find user by email: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
