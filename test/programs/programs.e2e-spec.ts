@@ -172,4 +172,166 @@ describe('Programs (e2e)', () => {
         .expect(500);
     });
   });
+
+  describe('PATCH /api/v1/onpaku/programs', () => {
+    beforeEach(() => {
+      // 各テストの前にモックをリセット
+      jest.clearAllMocks();
+
+      // デフォルトのモックレスポンスを設定
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({
+            title: 'テストプログラム',
+            subTitle: 'サブタイトル',
+            number: 1,
+            latitude: 35.6895,
+            longitude: 139.6917,
+            placeName: 'テスト会場',
+            zip: '123-4567',
+            prefecture: '東京都',
+            address: '渋谷区',
+            street: '1-1-1',
+            partnerUsers: [],
+          }),
+        }),
+        update: jest.fn().mockResolvedValue(undefined),
+      });
+    });
+
+    it('should update an existing program successfully', () => {
+      const updateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+        sub_title: '更新後のサブタイトル',
+        number: 2,
+        latitude: 35.0,
+        longitude: 140.0,
+        place_name: '更新後の会場',
+        zip: '123-4567',
+        prefecture: '更新後の都道府県',
+        address: '更新後の市区町村',
+        street: '更新後の番地',
+        partner_users: [
+          {
+            email: 'partner@example.com',
+            role: 'owner',
+          } as PartnerUser,
+        ],
+      };
+
+      return request(app.getHttpServer())
+        .patch('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .send(updateProgramDto)
+        .expect(200)
+        .expect(() => {
+          expect(firestoreMock.getFirestore().collection).toHaveBeenCalledWith(
+            'programs',
+          );
+          expect(mockCollection.doc).toHaveBeenCalledWith(updateProgramDto.id);
+          expect(mockCollection.doc().update).toHaveBeenCalled();
+
+          if (updateProgramDto.partner_users?.length) {
+            expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
+              updateProgramDto.partner_users[0].email,
+              expect.objectContaining({
+                id: updateProgramDto.id,
+                title: updateProgramDto.title,
+                role: updateProgramDto.partner_users[0].role,
+                placeName: updateProgramDto.place_name,
+                prefecture: updateProgramDto.prefecture,
+                address: updateProgramDto.address,
+              }),
+            );
+          }
+        });
+    });
+
+    it('should return 404 when program does not exist', () => {
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+        }),
+      });
+
+      const updateProgramDto = {
+        id: 'non-existent',
+        title: '更新後のタイトル',
+      };
+
+      return request(app.getHttpServer())
+        .patch('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .send(updateProgramDto)
+        .expect(404);
+    });
+
+    it('should return 400 when request body is invalid', () => {
+      const invalidDto = {
+        // idが必須なのに欠けている
+        title: '更新後のタイトル',
+      };
+
+      return request(app.getHttpServer())
+        .patch('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .send(invalidDto)
+        .expect(400);
+    });
+
+    it('should update only specified fields', () => {
+      const updateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+      };
+
+      return request(app.getHttpServer())
+        .patch('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .send(updateProgramDto)
+        .expect(200)
+        .expect(() => {
+          const updateCall = mockCollection.doc().update.mock.calls[0][0];
+          expect(updateCall).toHaveProperty('title', '更新後のタイトル');
+          expect(updateCall).toHaveProperty('updatedAt');
+          // 未指定のフィールドが更新データに含まれていないことを確認
+          expect(updateCall).not.toHaveProperty('subTitle');
+          expect(updateCall).not.toHaveProperty('number');
+          expect(updateCall).not.toHaveProperty('latitude');
+          expect(updateCall).not.toHaveProperty('longitude');
+          expect(updateCall).not.toHaveProperty('placeName');
+          expect(updateCall).not.toHaveProperty('zip');
+          expect(updateCall).not.toHaveProperty('prefecture');
+          expect(updateCall).not.toHaveProperty('address');
+          expect(updateCall).not.toHaveProperty('street');
+          expect(updateCall).not.toHaveProperty('partnerUsers');
+        });
+    });
+
+    it('should handle Firestore errors', () => {
+      const error = new Error('Firestore error');
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({
+            title: 'テストプログラム',
+          }),
+        }),
+        update: jest.fn().mockRejectedValue(error),
+      });
+
+      const updateProgramDto = {
+        id: 'program1',
+        title: '更新後のタイトル',
+      };
+
+      return request(app.getHttpServer())
+        .patch('/api/v1/onpaku/programs')
+        .set('Authorization', `Bearer ${process.env.API_KEY}`)
+        .send(updateProgramDto)
+        .expect(500);
+    });
+  });
 });
