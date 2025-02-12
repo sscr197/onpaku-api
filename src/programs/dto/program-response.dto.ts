@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PartnerUserDto } from './update-program.dto';
+import { UpdatePartnerUserDto } from './update-program.dto';
 
-export class ProgramResponseDto {
+export class ProgramDataResponseDto {
   @ApiProperty({
     description: 'プログラムID',
     example: 'program123',
@@ -67,10 +67,18 @@ export class ProgramResponseDto {
     example: '渋谷2-24-12',
   })
   street: string;
+}
+
+export class ProgramResponseDto {
+  @ApiProperty({
+    description: 'プログラム情報',
+    type: ProgramDataResponseDto,
+  })
+  program: ProgramDataResponseDto;
 
   @ApiProperty({
     description: 'パートナーユーザー一覧',
-    type: [PartnerUserDto],
+    type: [UpdatePartnerUserDto],
   })
-  partnerUsers: PartnerUserDto[];
+  partner_users: UpdatePartnerUserDto[];
 }

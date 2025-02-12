@@ -1,6 +1,6 @@
 ### 環境変数
 @baseUrl = http://localhost:3000/api/v1/onpaku
-@apiKey = onpaku-api
+@apiKey = {{$dotenv API_KEY}}
 
 ### 予約登録
 POST {{baseUrl}}/reservation

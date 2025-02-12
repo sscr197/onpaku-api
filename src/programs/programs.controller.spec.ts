@@ -134,17 +134,19 @@ describe('ProgramsController', () => {
   describe('updateProgram', () => {
     it('should update a program successfully', async () => {
       const updateProgramDto: UpdateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
-        sub_title: '更新後のサブタイトル',
-        number: 2,
-        latitude: 35.0,
-        longitude: 140.0,
-        place_name: '更新後の会場',
-        zip: '123-4567',
-        prefecture: '更新後の都道府県',
-        address: '更新後の市区町村',
-        street: '更新後の番地',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+          sub_title: '更新後のサブタイトル',
+          number: 2,
+          latitude: 35.0,
+          longitude: 140.0,
+          place_name: '更新後の会場',
+          zip: '123-4567',
+          prefecture: '更新後の都道府県',
+          address: '更新後の市区町村',
+          street: '更新後の番地',
+        },
         partner_users: [{ email: 'partner1@example.com', role: 'owner' }],
       };
 
@@ -152,14 +154,17 @@ describe('ProgramsController', () => {
 
       expect(serviceMock.updateProgram).toHaveBeenCalledWith(updateProgramDto);
       expect(loggerMock.debug).toHaveBeenCalledWith(
-        `Received request to update program: ${updateProgramDto.id}`,
+        `Received request to update program: ${updateProgramDto.program.id}`,
       );
     });
 
     it('should handle errors when updating program', async () => {
       const updateProgramDto: UpdateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+        },
+        partner_users: [],
       };
 
       const error = new Error('Service error');

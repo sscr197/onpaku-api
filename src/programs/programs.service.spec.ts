@@ -186,17 +186,19 @@ describe('ProgramsService', () => {
   describe('updateProgram', () => {
     it('should update a program successfully', async () => {
       const updateProgramDto: UpdateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
-        sub_title: '更新後のサブタイトル',
-        number: 2,
-        latitude: 35.0,
-        longitude: 140.0,
-        place_name: '更新後の会場',
-        zip: '123-4567',
-        prefecture: '更新後の都道府県',
-        address: '更新後の市区町村',
-        street: '更新後の番地',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+          sub_title: '更新後のサブタイトル',
+          number: 2,
+          latitude: 35.0,
+          longitude: 140.0,
+          place_name: '更新後の会場',
+          zip: '123-4567',
+          prefecture: '更新後の都道府県',
+          address: '更新後の市区町村',
+          street: '更新後の番地',
+        },
         partner_users: [{ email: 'partner1@example.com', role: 'owner' }],
       };
 
@@ -204,16 +206,16 @@ describe('ProgramsService', () => {
 
       expect(mockDocRef.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: updateProgramDto.title,
-          subTitle: updateProgramDto.sub_title,
-          number: updateProgramDto.number,
-          latitude: updateProgramDto.latitude,
-          longitude: updateProgramDto.longitude,
-          placeName: updateProgramDto.place_name,
-          zip: updateProgramDto.zip,
-          prefecture: updateProgramDto.prefecture,
-          address: updateProgramDto.address,
-          street: updateProgramDto.street,
+          title: updateProgramDto.program.title,
+          subTitle: updateProgramDto.program.sub_title,
+          number: updateProgramDto.program.number,
+          latitude: updateProgramDto.program.latitude,
+          longitude: updateProgramDto.program.longitude,
+          placeName: updateProgramDto.program.place_name,
+          zip: updateProgramDto.program.zip,
+          prefecture: updateProgramDto.program.prefecture,
+          address: updateProgramDto.program.address,
+          street: updateProgramDto.program.street,
           partnerUsers: updateProgramDto.partner_users,
           updatedAt: expect.any(Date),
         }),
@@ -227,12 +229,12 @@ describe('ProgramsService', () => {
         expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
           updateProgramDto.partner_users[0].email,
           expect.objectContaining({
-            id: updateProgramDto.id,
-            title: updateProgramDto.title,
+            id: updateProgramDto.program.id,
+            title: updateProgramDto.program.title,
             role: updateProgramDto.partner_users[0].role,
-            placeName: updateProgramDto.place_name,
-            prefecture: updateProgramDto.prefecture,
-            address: updateProgramDto.address,
+            placeName: updateProgramDto.program.place_name,
+            prefecture: updateProgramDto.program.prefecture,
+            address: updateProgramDto.program.address,
           }),
         );
       }
@@ -240,8 +242,10 @@ describe('ProgramsService', () => {
 
     it('should throw NotFoundException when program does not exist', async () => {
       const updateProgramDto: UpdateProgramDto = {
-        id: 'non-existent',
-        title: '更新後のタイトル',
+        program: {
+          id: 'non-existent',
+          title: '更新後のタイトル',
+        },
       };
 
       mockDocRef.get.mockResolvedValueOnce({ exists: false });
@@ -256,8 +260,10 @@ describe('ProgramsService', () => {
 
     it('should handle errors when updating program', async () => {
       const updateProgramDto: UpdateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+        },
       };
 
       const error = new Error('Firestore error');
@@ -275,16 +281,17 @@ describe('ProgramsService', () => {
 
     it('should update only specified fields', async () => {
       const updateProgramDto: UpdateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
-        // 他のフィールドは未指定
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+        },
       };
 
       await service.updateProgram(updateProgramDto);
 
       expect(mockDocRef.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: updateProgramDto.title,
+          title: updateProgramDto.program.title,
           updatedAt: expect.any(Date),
         }),
       );

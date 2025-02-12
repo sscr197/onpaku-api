@@ -155,7 +155,7 @@ export class CreateProgramDto {
   program: Program;
 
   @ApiProperty({
-    description: 'パートナーユーザー一覧（最低1名必要）',
+    description: 'パートナーユーザー一覧',
     type: [PartnerUser],
     required: true,
     example: [

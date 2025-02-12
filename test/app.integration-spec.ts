@@ -157,17 +157,25 @@ describe('IntegrationE2E', () => {
         .expect(200);
 
       expect(resProgram.body).toMatchObject({
-        id: TEST_PROGRAMS.A.id,
-        title: TEST_PROGRAMS.A.title,
-        sub_title: TEST_PROGRAMS.A.sub_title,
-        number: TEST_PROGRAMS.A.number,
-        latitude: TEST_PROGRAMS.A.latitude,
-        longitude: TEST_PROGRAMS.A.longitude,
-        place_name: TEST_PROGRAMS.A.place_name,
-        zip: TEST_PROGRAMS.A.zip,
-        prefecture: TEST_PROGRAMS.A.prefecture,
-        address: TEST_PROGRAMS.A.address,
-        street: TEST_PROGRAMS.A.street,
+        program: {
+          id: TEST_PROGRAMS.A.id,
+          title: TEST_PROGRAMS.A.title,
+          sub_title: TEST_PROGRAMS.A.sub_title,
+          number: TEST_PROGRAMS.A.number,
+          latitude: TEST_PROGRAMS.A.latitude,
+          longitude: TEST_PROGRAMS.A.longitude,
+          place_name: TEST_PROGRAMS.A.place_name,
+          zip: TEST_PROGRAMS.A.zip,
+          prefecture: TEST_PROGRAMS.A.prefecture,
+          address: TEST_PROGRAMS.A.address,
+          street: TEST_PROGRAMS.A.street,
+        },
+        partner_users: [
+          {
+            email: TEST_USERS.A.email,
+            role: 'owner',
+          },
+        ],
       });
 
       // パートナーVCの確認
@@ -210,17 +218,20 @@ describe('IntegrationE2E', () => {
         .expect(200);
 
       expect(resProgram.body).toMatchObject({
-        id: TEST_PROGRAMS.B.id,
-        title: TEST_PROGRAMS.B.title,
-        sub_title: TEST_PROGRAMS.B.sub_title,
-        number: TEST_PROGRAMS.B.number,
-        latitude: TEST_PROGRAMS.B.latitude,
-        longitude: TEST_PROGRAMS.B.longitude,
-        place_name: TEST_PROGRAMS.B.place_name,
-        zip: TEST_PROGRAMS.B.zip,
-        prefecture: TEST_PROGRAMS.B.prefecture,
-        address: TEST_PROGRAMS.B.address,
-        street: TEST_PROGRAMS.B.street,
+        program: {
+          id: TEST_PROGRAMS.B.id,
+          title: TEST_PROGRAMS.B.title,
+          sub_title: TEST_PROGRAMS.B.sub_title,
+          number: TEST_PROGRAMS.B.number,
+          latitude: TEST_PROGRAMS.B.latitude,
+          longitude: TEST_PROGRAMS.B.longitude,
+          place_name: TEST_PROGRAMS.B.place_name,
+          zip: TEST_PROGRAMS.B.zip,
+          prefecture: TEST_PROGRAMS.B.prefecture,
+          address: TEST_PROGRAMS.B.address,
+          street: TEST_PROGRAMS.B.street,
+        },
+        partner_users: [],
       });
     });
 
@@ -596,9 +607,20 @@ describe('IntegrationE2E', () => {
         .expect(200);
 
       expect(resProgram.body).toMatchObject({
-        id: programId,
-        title: 'パートナーなしプログラム',
-        partnerUsers: [],
+        program: {
+          id: programId,
+          title: 'パートナーなしプログラム',
+          sub_title: 'サブタイトル',
+          number: 3,
+          latitude: 35.6895,
+          longitude: 139.6917,
+          place_name: '会場C',
+          zip: '123-4567',
+          prefecture: '東京都',
+          address: '港区',
+          street: '3-3-3',
+        },
+        partner_users: [],
       });
 
       // VCが発行されていないことを確認（既存のユーザーで確認）
@@ -624,7 +646,9 @@ describe('IntegrationE2E', () => {
     it('11) PATCHでパートナーを追加し、VCが発行されることを確認', async () => {
       const programId = 'program-no-partner';
       const updateProgramDto = {
-        id: programId,
+        program: {
+          id: programId,
+        },
         partner_users: [
           {
             email: TEST_USERS.A.email,
@@ -647,8 +671,20 @@ describe('IntegrationE2E', () => {
         .expect(200);
 
       expect(resProgram.body).toMatchObject({
-        id: programId,
-        partnerUsers: updateProgramDto.partner_users,
+        program: {
+          id: programId,
+          title: 'パートナーなしプログラム',
+          sub_title: 'サブタイトル',
+          number: 3,
+          latitude: 35.6895,
+          longitude: 139.6917,
+          place_name: '会場C',
+          zip: '123-4567',
+          prefecture: '東京都',
+          address: '港区',
+          street: '3-3-3',
+        },
+        partner_users: updateProgramDto.partner_users,
       });
 
       // パートナーVCが発行されたことを確認

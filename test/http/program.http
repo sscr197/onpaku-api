@@ -1,15 +1,15 @@
 ### 環境変数
 @baseUrl = http://localhost:3000/api/v1/onpaku
-@apiKey = onpaku-api
+@apiKey = {{$dotenv API_KEY}}
 
 ### プログラム登録・更新
-POST {{baseUrl}}/program
+POST  {{baseUrl}}/programs
 Authorization: Bearer {{apiKey}}
 Content-Type: application/json
 
 {
   "program": {
-    "id": "program123",
+    "id": "program1234",
     "title": "サンプルプログラム",
     "sub_title": "プログラムのサブタイトル",
     "number": 1,
@@ -21,10 +21,24 @@ Content-Type: application/json
     "address": "渋谷区",
     "street": "渋谷2-24-12"
   },
+  "partner_users": []
+}
+
+### プログラム更新
+PATCH  {{baseUrl}}/programs
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "program": {
+    "id": "program1234",
+    "title": "更新後のプログラム名",
+    "sub_title": "更新後のサブタイトル"
+  },
   "partner_users": [
     {
       "email": "test@example.com",
       "role": "owner"
     }
   ]
-} 
+}

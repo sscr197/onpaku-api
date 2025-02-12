@@ -1,6 +1,6 @@
 ### 環境変数
 @baseUrl = https://onpaku-api-157884168241.asia-northeast1.run.app/api/v1/onpaku
-@apiKey = onpaku-api
+@apiKey = {{$dotenv API_KEY}}
 
 ### メールアドレスに紐づくPending状態のVC一覧を取得
 GET {{baseUrl}}/vcs/pending?email=test@example.com

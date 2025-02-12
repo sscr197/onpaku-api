@@ -10,10 +10,12 @@ import {
   Max,
   IsEmail,
   IsEnum,
+  IsNotEmpty,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class PartnerUserDto {
+export class UpdatePartnerUserDto {
   @ApiPropertyOptional({
     description: 'パートナーのメールアドレス',
     example: 'test@example.com',
@@ -35,12 +37,14 @@ export class PartnerUserDto {
   role?: string;
 }
 
-export class UpdateProgramDto {
+export class UpdateProgramDataDto {
   @ApiProperty({
     description: 'プログラムID',
     example: 'program123',
+    required: true,
   })
   @IsString()
+  @IsNotEmpty()
   id: string;
 
   @ApiPropertyOptional({
@@ -140,10 +144,22 @@ export class UpdateProgramDto {
   @IsOptional()
   @IsString()
   street?: string;
+}
+
+export class UpdateProgramDto {
+  @ApiProperty({
+    description: 'プログラム情報',
+    type: UpdateProgramDataDto,
+    required: true,
+  })
+  @IsObject()
+  @ValidateNested()
+  @Type(() => UpdateProgramDataDto)
+  program: UpdateProgramDataDto;
 
   @ApiPropertyOptional({
     description: 'パートナーユーザー一覧',
-    type: [PartnerUserDto],
+    type: [UpdatePartnerUserDto],
     example: [
       {
         email: 'owner@example.com',
@@ -154,6 +170,6 @@ export class UpdateProgramDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => PartnerUserDto)
-  partner_users?: PartnerUserDto[];
+  @Type(() => UpdatePartnerUserDto)
+  partner_users?: UpdatePartnerUserDto[];
 }

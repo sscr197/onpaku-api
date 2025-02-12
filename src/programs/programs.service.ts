@@ -139,30 +139,31 @@ export class ProgramsService {
   }
 
   async updateProgram(dto: UpdateProgramDto): Promise<void> {
-    this.logger.debug(`Updating program with id: ${dto.id}`);
+    this.logger.debug(`Updating program with id: ${dto.program.id}`);
     try {
       const programRef = this.firestore
         .getFirestore()
         .collection('programs')
-        .doc(dto.id);
+        .doc(dto.program.id);
 
       const programDoc = await programRef.get();
       if (!programDoc.exists) {
-        throw new NotFoundException(`Program ${dto.id} not found`);
+        throw new NotFoundException(`Program ${dto.program.id} not found`);
       }
 
       const updateData: any = {};
-      if (dto.title !== undefined) updateData.title = dto.title;
-      if (dto.sub_title !== undefined) updateData.subTitle = dto.sub_title;
-      if (dto.number !== undefined) updateData.number = dto.number;
-      if (dto.latitude !== undefined) updateData.latitude = dto.latitude;
-      if (dto.longitude !== undefined) updateData.longitude = dto.longitude;
-      if (dto.place_name !== undefined) updateData.placeName = dto.place_name;
-      if (dto.zip !== undefined) updateData.zip = dto.zip;
-      if (dto.prefecture !== undefined) updateData.prefecture = dto.prefecture;
-      if (dto.address !== undefined) updateData.address = dto.address;
-      if (dto.street !== undefined) updateData.street = dto.street;
-      if (dto.partner_users !== undefined) {
+      if (dto.program.title) updateData.title = dto.program.title;
+      if (dto.program.sub_title) updateData.subTitle = dto.program.sub_title;
+      if (dto.program.number) updateData.number = dto.program.number;
+      if (dto.program.latitude) updateData.latitude = dto.program.latitude;
+      if (dto.program.longitude) updateData.longitude = dto.program.longitude;
+      if (dto.program.place_name) updateData.placeName = dto.program.place_name;
+      if (dto.program.zip) updateData.zip = dto.program.zip;
+      if (dto.program.prefecture)
+        updateData.prefecture = dto.program.prefecture;
+      if (dto.program.address) updateData.address = dto.program.address;
+      if (dto.program.street) updateData.street = dto.program.street;
+      if (dto.partner_users) {
         updateData.partnerUsers = dto.partner_users.map((partner) => ({
           email: partner.email,
           role: partner.role,
@@ -179,20 +180,20 @@ export class ProgramsService {
           if (!partner.email || !partner.role) continue;
 
           this.logger.debug(
-            `Updating Partner VC for user: ${partner.email} in program: ${dto.id}`,
+            `Updating Partner VC for user: ${partner.email} in program: ${dto.program.id}`,
           );
           await this.vcsService.createPartnerVC(partner.email, {
-            id: dto.id,
-            title: dto.title || programData?.title || '',
+            id: dto.program.id,
+            title: dto.program.title || programData?.title || '',
             role: partner.role,
-            placeName: dto.place_name || programData?.placeName || '',
-            prefecture: dto.prefecture || programData?.prefecture || '',
-            address: dto.address || programData?.address || '',
+            placeName: dto.program.place_name || programData?.placeName || '',
+            prefecture: dto.program.prefecture || programData?.prefecture || '',
+            address: dto.program.address || programData?.address || '',
           });
         }
       }
 
-      this.logger.log(`Program updated successfully: ${dto.id}`);
+      this.logger.log(`Program updated successfully: ${dto.program.id}`);
     } catch (error) {
       this.logger.error(
         `Failed to update program: ${error.message}`,
@@ -215,18 +216,20 @@ export class ProgramsService {
       }
       const data = doc.data();
       return {
-        id: doc.id,
-        title: data?.title,
-        sub_title: data?.subTitle,
-        number: data?.number,
-        latitude: data?.latitude,
-        longitude: data?.longitude,
-        place_name: data?.placeName,
-        zip: data?.zip,
-        prefecture: data?.prefecture,
-        address: data?.address,
-        street: data?.street,
-        partnerUsers: data?.partnerUsers || [],
+        program: {
+          id: doc.id,
+          title: data?.title,
+          sub_title: data?.subTitle,
+          number: data?.number,
+          latitude: data?.latitude,
+          longitude: data?.longitude,
+          place_name: data?.placeName,
+          zip: data?.zip,
+          prefecture: data?.prefecture,
+          address: data?.address,
+          street: data?.street,
+        },
+        partner_users: data?.partnerUsers || [],
       };
     } catch (error) {
       this.logger.error(

@@ -202,17 +202,19 @@ describe('Programs (e2e)', () => {
 
     it('should update an existing program successfully', () => {
       const updateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
-        sub_title: '更新後のサブタイトル',
-        number: 2,
-        latitude: 35.0,
-        longitude: 140.0,
-        place_name: '更新後の会場',
-        zip: '123-4567',
-        prefecture: '更新後の都道府県',
-        address: '更新後の市区町村',
-        street: '更新後の番地',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+          sub_title: '更新後のサブタイトル',
+          number: 2,
+          latitude: 35.0,
+          longitude: 140.0,
+          place_name: '更新後の会場',
+          zip: '123-4567',
+          prefecture: '更新後の都道府県',
+          address: '更新後の市区町村',
+          street: '更新後の番地',
+        },
         partner_users: [
           {
             email: 'partner@example.com',
@@ -230,19 +232,21 @@ describe('Programs (e2e)', () => {
           expect(firestoreMock.getFirestore().collection).toHaveBeenCalledWith(
             'programs',
           );
-          expect(mockCollection.doc).toHaveBeenCalledWith(updateProgramDto.id);
+          expect(mockCollection.doc).toHaveBeenCalledWith(
+            updateProgramDto.program.id,
+          );
           expect(mockCollection.doc().update).toHaveBeenCalled();
 
           if (updateProgramDto.partner_users?.length) {
             expect(vcsServiceMock.createPartnerVC).toHaveBeenCalledWith(
               updateProgramDto.partner_users[0].email,
               expect.objectContaining({
-                id: updateProgramDto.id,
-                title: updateProgramDto.title,
+                id: updateProgramDto.program.id,
+                title: updateProgramDto.program.title,
                 role: updateProgramDto.partner_users[0].role,
-                placeName: updateProgramDto.place_name,
-                prefecture: updateProgramDto.prefecture,
-                address: updateProgramDto.address,
+                placeName: updateProgramDto.program.place_name,
+                prefecture: updateProgramDto.program.prefecture,
+                address: updateProgramDto.program.address,
               }),
             );
           }
@@ -257,8 +261,11 @@ describe('Programs (e2e)', () => {
       });
 
       const updateProgramDto = {
-        id: 'non-existent',
-        title: '更新後のタイトル',
+        program: {
+          id: 'non-existent',
+
+          title: '更新後のタイトル',
+        },
       };
 
       return request(app.getHttpServer())
@@ -283,8 +290,10 @@ describe('Programs (e2e)', () => {
 
     it('should update only specified fields', () => {
       const updateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+        },
       };
 
       return request(app.getHttpServer())
@@ -323,8 +332,10 @@ describe('Programs (e2e)', () => {
       });
 
       const updateProgramDto = {
-        id: 'program1',
-        title: '更新後のタイトル',
+        program: {
+          id: 'program1',
+          title: '更新後のタイトル',
+        },
       };
 
       return request(app.getHttpServer())

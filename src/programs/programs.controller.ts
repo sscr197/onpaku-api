@@ -98,7 +98,7 @@ export class ProgramsController {
     @Body() updateProgramDto: UpdateProgramDto,
   ): Promise<void> {
     this.logger.debug(
-      `Received request to update program: ${updateProgramDto.id}`,
+      `Received request to update program: ${updateProgramDto.program.id}`,
     );
     try {
       await this.programsService.updateProgram(updateProgramDto);
