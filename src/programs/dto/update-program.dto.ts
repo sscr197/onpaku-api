@@ -5,9 +5,6 @@ import {
   IsNumber,
   IsArray,
   ValidateNested,
-  Matches,
-  Min,
-  Max,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -50,8 +47,6 @@ export class UpdateProgramDataDto {
   @ApiPropertyOptional({
     description: 'プログラムタイトル',
     example: 'サンプルプログラム',
-    minLength: 1,
-    maxLength: 100,
   })
   @IsOptional()
   @IsString()
@@ -60,8 +55,6 @@ export class UpdateProgramDataDto {
   @ApiPropertyOptional({
     description: 'プログラムサブタイトル',
     example: 'プログラムのサブタイトル',
-    minLength: 1,
-    maxLength: 200,
   })
   @IsOptional()
   @IsString()
@@ -70,42 +63,30 @@ export class UpdateProgramDataDto {
   @ApiPropertyOptional({
     description: 'プログラム番号',
     example: 1,
-    minimum: 1,
   })
   @IsOptional()
   @IsNumber()
-  @Min(1)
   number?: number;
 
   @ApiPropertyOptional({
     description: '緯度（日本国内の範囲）',
     example: 35.6895,
-    minimum: 20,
-    maximum: 46,
   })
   @IsOptional()
   @IsNumber()
-  @Min(20)
-  @Max(46)
   latitude?: number;
 
   @ApiPropertyOptional({
     description: '経度（日本国内の範囲）',
     example: 139.6917,
-    minimum: 122,
-    maximum: 154,
   })
   @IsOptional()
   @IsNumber()
-  @Min(122)
-  @Max(154)
   longitude?: number;
 
   @ApiPropertyOptional({
     description: '場所名',
     example: '渋谷スクランブルスクエア',
-    minLength: 1,
-    maxLength: 100,
   })
   @IsOptional()
   @IsString()
@@ -114,11 +95,9 @@ export class UpdateProgramDataDto {
   @ApiPropertyOptional({
     description: '郵便番号（ハイフン含む）',
     example: '150-0002',
-    pattern: '^\\d{3}-\\d{4}$',
   })
   @IsOptional()
   @IsString()
-  @Matches(/^\d{3}-\d{4}$/)
   zip?: string;
 
   @ApiPropertyOptional({

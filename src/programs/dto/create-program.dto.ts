@@ -7,9 +7,8 @@ import {
   IsObject,
   IsEmail,
   IsEnum,
-  Min,
-  Max,
-  Matches,
+  IsOptional,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -40,7 +39,9 @@ export class Program {
     description: 'プログラムID',
     example: 'program123',
     required: true,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   id: string;
 
@@ -48,9 +49,9 @@ export class Program {
     description: 'プログラムタイトル',
     example: 'サンプルプログラム',
     required: true,
-    minLength: 1,
-    maxLength: 100,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   title: string;
 
@@ -58,9 +59,9 @@ export class Program {
     description: 'プログラムサブタイトル',
     example: 'プログラムのサブタイトル',
     required: true,
-    minLength: 1,
-    maxLength: 200,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   sub_title: string;
 
@@ -68,43 +69,39 @@ export class Program {
     description: 'プログラム番号',
     example: 1,
     required: true,
-    minimum: 1,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== 0)
   @IsNumber()
-  @Min(1)
   number: number;
 
   @ApiProperty({
     description: '緯度（日本国内の範囲）',
     example: 35.6895,
     required: true,
-    minimum: 20,
-    maximum: 46,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== 0)
   @IsNumber()
-  @Min(20)
-  @Max(46)
   latitude: number;
 
   @ApiProperty({
     description: '経度（日本国内の範囲）',
     example: 139.6917,
     required: true,
-    minimum: 122,
-    maximum: 154,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== 0)
   @IsNumber()
-  @Min(122)
-  @Max(154)
   longitude: number;
 
   @ApiProperty({
     description: '場所名',
     example: '渋谷スクランブルスクエア',
     required: true,
-    minLength: 1,
-    maxLength: 100,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   place_name: string;
 
@@ -112,17 +109,19 @@ export class Program {
     description: '郵便番号（ハイフン含む）',
     example: '150-0002',
     required: true,
-    pattern: '^\\d{3}-\\d{4}$',
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
-  @Matches(/^\d{3}-\d{4}$/)
   zip: string;
 
   @ApiProperty({
     description: '都道府県',
     example: '東京都',
     required: true,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   prefecture: string;
 
@@ -130,7 +129,9 @@ export class Program {
     description: '市区町村',
     example: '渋谷区',
     required: true,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   address: string;
 
@@ -138,7 +139,9 @@ export class Program {
     description: '番地以降',
     example: '渋谷2-24-12',
     required: true,
+    nullable: true,
   })
+  @ValidateIf((object, value) => value !== '')
   @IsString()
   street: string;
 }
