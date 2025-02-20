@@ -124,26 +124,194 @@ export class VcsService {
     }
   }
 
-  async activateVC(vcId: string): Promise<void> {
-    this.logger.debug(`Activating VC: ${vcId}`);
+  async getPendingVCsByEmailTransformed(email: string): Promise<any[]> {
+    this.logger.debug(`Fetching pending VCs for email (transformed): ${email}`);
     try {
-      const vcRef = this.firestore.getFirestore().collection('vcs').doc(vcId);
-      await vcRef.update({ status: VCStatus.Active });
-      this.logger.log(`VC activated successfully: ${vcId}`);
+      const snapshot = await this.firestore
+        .getFirestore()
+        .collection('vcs')
+        .where('userEmail', '==', email)
+        .where('status', '==', VCStatus.Pending)
+        .get();
+
+      const docs = snapshot.docs;
+      const results = await Promise.all(
+        docs.map(async (doc) => {
+          const data = doc.data();
+          return this.transformVcDocument(doc.id, data);
+        }),
+      );
+      return results.filter((r) => r !== null);
     } catch (error) {
-      this.logger.error(`Failed to activate VC: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch pending VCs: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  async revokeVC(vcId: string): Promise<void> {
-    this.logger.debug(`Revoking VC: ${vcId}`);
+  private async transformVcDocument(
+    documentId: string,
+    data: any,
+  ): Promise<any> {
+    const { userEmail, type, status, vcData } = data;
+    switch (type) {
+      case VCType.User:
+        return await this.buildUserVcResponse(
+          documentId,
+          userEmail,
+          status,
+          vcData,
+        );
+      case VCType.Partner:
+        return await this.buildPartnerVcResponse(
+          documentId,
+          userEmail,
+          status,
+          vcData,
+        );
+      case VCType.Event:
+        return await this.buildEventVcResponse(
+          documentId,
+          userEmail,
+          status,
+          vcData,
+        );
+      default:
+        this.logger.warn(`Unknown VC type: ${type}, docId=${documentId}`);
+        return null;
+    }
+  }
+
+  private async buildUserVcResponse(
+    documentId: string,
+    email: string,
+    status: string,
+    vcData: any,
+  ) {
+    const userSnap = await this.firestore
+      .getFirestore()
+      .collection('users')
+      .doc(email)
+      .get();
+    if (!userSnap.exists) {
+      this.logger.warn(`User doc not found for email: ${email}`);
+      return null;
+    }
+    const userInfo = userSnap.data();
+
+    return {
+      documentId,
+      email,
+      type: 'user',
+      status,
+      vcData: {
+        type: 'OnpakuUser',
+        onpakuUserId: userInfo?.onpakuUserId,
+        familyName: userInfo?.familyName,
+        firstName: userInfo?.firstName,
+      },
+    };
+  }
+
+  private async buildPartnerVcResponse(
+    documentId: string,
+    email: string,
+    status: string,
+    vcData: any,
+  ) {
+    const userSnap = await this.firestore
+      .getFirestore()
+      .collection('users')
+      .doc(email)
+      .get();
+    let firstName = '';
+    if (userSnap.exists) {
+      const userData = userSnap.data();
+      firstName = userData?.firstName || '';
+    }
+
+    const programId = vcData.id;
+    const programSnap = await this.firestore
+      .getFirestore()
+      .collection('programs')
+      .doc(programId)
+      .get();
+    let programTitle = '';
+    let programPrefecture = '';
+    if (programSnap.exists) {
+      const pData = programSnap.data();
+      programTitle = pData?.title || '';
+      programPrefecture = pData?.prefecture || '';
+    }
+
+    return {
+      documentId,
+      email,
+      type: 'partner',
+      status,
+      vcData: {
+        type: 'OnpakuPartner',
+        programId,
+        programTitle,
+        programPrefecture,
+      },
+    };
+  }
+
+  private async buildEventVcResponse(
+    documentId: string,
+    email: string,
+    status: string,
+    vcData: any,
+  ) {
+    const { programId, startTime, endTime } = vcData;
+    const programSnap = await this.firestore
+      .getFirestore()
+      .collection('programs')
+      .doc(programId)
+      .get();
+    let programTitle = '';
+    let programPrefecture = '';
+    if (programSnap.exists) {
+      const pData = programSnap.data();
+      programTitle = pData?.title || '';
+      programPrefecture = pData?.prefecture || '';
+    }
+
+    return {
+      documentId,
+      email,
+      type: 'event',
+      status,
+      vcData: {
+        type: 'OnpakuEvent',
+        programId,
+        programTitle,
+        programPrefecture,
+        startTime,
+        endTime,
+      },
+    };
+  }
+
+  async updateVcStatus(documentId: string, status: VCStatus): Promise<void> {
+    this.logger.debug(
+      `Updating VC status: docId=${documentId}, status=${status}`,
+    );
     try {
-      const vcRef = this.firestore.getFirestore().collection('vcs').doc(vcId);
-      await vcRef.update({ status: VCStatus.Revoked });
-      this.logger.log(`VC revoked successfully: ${vcId}`);
+      const vcRef = this.firestore
+        .getFirestore()
+        .collection('vcs')
+        .doc(documentId);
+      await vcRef.update({ status });
+      this.logger.log(`VC status updated successfully: ${documentId}`);
     } catch (error) {
-      this.logger.error(`Failed to revoke VC: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update VC status: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

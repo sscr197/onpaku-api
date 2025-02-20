@@ -1,15 +1,18 @@
 ### 環境変数
-@baseUrl = https://onpaku-api-157884168241.asia-northeast1.run.app/api/v1/onpaku
+@baseUrl = http://localhost:3000/api/v1/onpaku
 @apiKey = {{$dotenv API_KEY}}
 
 ### メールアドレスに紐づくPending状態のVC一覧を取得
-GET {{baseUrl}}/vcs/pending?email=test@example.com
+GET {{baseUrl}}/vcs/pending?email=user-c@example.com
 Authorization: Bearer {{apiKey}}
 
-### VCをアクティベート
-PATCH {{baseUrl}}/vcs/user_test@example.com/activate
+### VCのステータスを更新
+PATCH {{baseUrl}}/vcs/status
 Authorization: Bearer {{apiKey}}
+Content-Type: application/json
 
-### VCを無効化
-PATCH {{baseUrl}}/vcs/user_test@example.com/revoke
-Authorization: Bearer {{apiKey}} 
+{
+  "documentId": "partner_sscr0827@gmail.com_program-a-123",
+  "status": "completed"
+}
+

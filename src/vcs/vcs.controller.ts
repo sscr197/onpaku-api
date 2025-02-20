@@ -6,9 +6,11 @@ import {
   BadRequestException,
   Patch,
   Body,
+  HttpCode,
 } from '@nestjs/common';
 import { VcsService } from './vcs.service';
 import { VCDataDto } from './dto/vc-data.dto';
+import { UpdateVcStatusDto } from './dto/update-vc-status.dto';
 import { ApiKeyGuard } from '../shared/guards/api-key.guard';
 import {
   ApiTags,
@@ -59,7 +61,7 @@ export class VcsController {
     status: 401,
     description: 'APIキーが無効か、認証に失敗しました。',
   })
-  async getPendingVCs(@Query('email') email: string): Promise<VCDataDto[]> {
+  async getPendingVCs(@Query('email') email: string): Promise<any[]> {
     if (!email) {
       throw new BadRequestException('Email is required');
     }
@@ -68,7 +70,7 @@ export class VcsController {
       `Received request to get pending VCs for email: ${email}`,
     );
     try {
-      return await this.vcsService.getPendingVCsByEmail(email);
+      return await this.vcsService.getPendingVCsByEmailTransformed(email);
     } catch (error) {
       this.logger.error(
         `Failed to get pending VCs: ${error.message}`,
@@ -78,32 +80,23 @@ export class VcsController {
     }
   }
 
-  @Patch('activate')
+  @Patch('status')
+  @HttpCode(200)
   @ApiOperation({
-    summary: 'VCをアクティベート',
-    description:
-      '指定されたVCをアクティベート（有効化）します。VCのステータスがpendingの場合のみ実行可能です。',
+    summary: 'VCのステータスを更新',
+    description: '指定されたVCのステータスを更新します。',
   })
   @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['vcId'],
-      properties: {
-        vcId: {
-          type: 'string',
-          description: 'アクティベート対象のVC ID',
-          example: 'vc_123456789',
-        },
-      },
-    },
+    type: UpdateVcStatusDto,
+    description: 'VCのドキュメントIDと新しいステータスを指定します。',
   })
   @ApiResponse({
     status: 200,
-    description: 'VCのアクティベートに成功しました。',
+    description: 'VCのステータス更新に成功しました。',
   })
   @ApiResponse({
     status: 400,
-    description: 'VC IDが指定されていないか、不正なフォーマットです。',
+    description: 'documentIdまたはstatusが不正です。',
   })
   @ApiResponse({
     status: 401,
@@ -111,75 +104,24 @@ export class VcsController {
   })
   @ApiResponse({
     status: 404,
-    description: '指定されたVC IDのVCが見つかりません。',
+    description: '指定されたVCが見つかりません。',
   })
-  @ApiResponse({
-    status: 409,
-    description:
-      '指定されたVCは既にアクティベートされているか、無効化されています。',
-  })
-  async activateVC(@Body('vcId') vcId: string): Promise<void> {
-    if (!vcId) {
-      throw new BadRequestException('VC ID is required');
+  async updateVcStatus(
+    @Body() { documentId, status }: UpdateVcStatusDto,
+  ): Promise<void> {
+    if (!documentId) {
+      throw new BadRequestException('documentId is required');
     }
-    this.logger.debug(`Received request to activate VC: ${vcId}`);
+    this.logger.debug(
+      `Received request to update VC status: ${documentId} -> ${status}`,
+    );
     try {
-      await this.vcsService.activateVC(vcId);
+      await this.vcsService.updateVcStatus(documentId, status);
     } catch (error) {
-      this.logger.error(`Failed to activate VC: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
-
-  @Patch('revoke')
-  @ApiOperation({
-    summary: 'VCを無効化',
-    description:
-      '指定されたVCを無効化します。VCのステータスがactiveの場合のみ実行可能です。',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['vcId'],
-      properties: {
-        vcId: {
-          type: 'string',
-          description: '無効化対象のVC ID',
-          example: 'vc_123456789',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'VCの無効化に成功しました。',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'VC IDが指定されていないか、不正なフォーマットです。',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'APIキーが無効か、認証に失敗しました。',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '指定されたVC IDのVCが見つかりません。',
-  })
-  @ApiResponse({
-    status: 409,
-    description:
-      '指定されたVCは既に無効化されているか、まだアクティベートされていません。',
-  })
-  async revokeVC(@Body('vcId') vcId: string): Promise<void> {
-    if (!vcId) {
-      throw new BadRequestException('VC ID is required');
-    }
-    this.logger.debug(`Received request to revoke VC: ${vcId}`);
-    try {
-      await this.vcsService.revokeVC(vcId);
-    } catch (error) {
-      this.logger.error(`Failed to revoke VC: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update VC status: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

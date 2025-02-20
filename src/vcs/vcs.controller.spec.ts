@@ -4,6 +4,7 @@ import { VcsService } from './vcs.service';
 import { CustomLogger } from '../shared/logger/custom.logger';
 import { VCDataDto, VCStatus, VCType } from './dto/vc-data.dto';
 import { ConfigService } from '@nestjs/config';
+import { BadRequestException } from '@nestjs/common';
 
 describe('VcsController', () => {
   let controller: VcsController;
@@ -25,9 +26,8 @@ describe('VcsController', () => {
     } as unknown as jest.Mocked<CustomLogger>;
 
     serviceMock = {
-      getPendingVCsByEmail: jest.fn(),
-      activateVC: jest.fn(),
-      revokeVC: jest.fn(),
+      getPendingVCsByEmailTransformed: jest.fn(),
+      updateVcStatus: jest.fn(),
       createOrUpdateUserVC: jest.fn(),
       createPartnerVC: jest.fn(),
       createEventVC: jest.fn(),
@@ -70,24 +70,37 @@ describe('VcsController', () => {
   describe('getPendingVCs', () => {
     it('should return pending VCs for email', async () => {
       const email = 'test@example.com';
-      const mockVCs: VCDataDto[] = [
+      const mockVCs = [
         {
-          userEmail: email,
-          type: VCType.User,
-          vcData: { id: 'vc1' },
+          documentId: 'vc1',
+          email,
+          type: 'user',
           status: VCStatus.Pending,
-          issuedAt: new Date(),
+          vcData: {
+            type: 'OnpakuUser',
+            onpakuUserId: 'user1',
+            familyName: '山田',
+            firstName: '太郎',
+          },
         },
       ];
 
-      serviceMock.getPendingVCsByEmail.mockResolvedValue(mockVCs);
+      serviceMock.getPendingVCsByEmailTransformed.mockResolvedValue(mockVCs);
 
       const result = await controller.getPendingVCs(email);
 
       expect(result).toEqual(mockVCs);
-      expect(serviceMock.getPendingVCsByEmail).toHaveBeenCalledWith(email);
+      expect(serviceMock.getPendingVCsByEmailTransformed).toHaveBeenCalledWith(
+        email,
+      );
       expect(loggerMock.debug).toHaveBeenCalledWith(
         `Received request to get pending VCs for email: ${email}`,
+      );
+    });
+
+    it('should throw BadRequestException when email is not provided', async () => {
+      await expect(controller.getPendingVCs('')).rejects.toThrow(
+        BadRequestException,
       );
     });
 
@@ -95,7 +108,7 @@ describe('VcsController', () => {
       const email = 'test@example.com';
       const error = new Error('Service error');
 
-      serviceMock.getPendingVCsByEmail.mockRejectedValue(error);
+      serviceMock.getPendingVCsByEmailTransformed.mockRejectedValue(error);
 
       await expect(controller.getPendingVCs(email)).rejects.toThrow(error);
 
@@ -106,59 +119,46 @@ describe('VcsController', () => {
     });
   });
 
-  describe('activateVC', () => {
-    it('should activate VC successfully', async () => {
-      const vcId = 'vc1';
+  describe('updateVcStatus', () => {
+    it('should update VC status successfully', async () => {
+      const documentId = 'vc1';
+      const status = VCStatus.Completed;
 
-      serviceMock.activateVC.mockResolvedValue(undefined);
+      serviceMock.updateVcStatus.mockResolvedValue(undefined);
 
-      await controller.activateVC(vcId);
+      await controller.updateVcStatus({ documentId, status });
 
-      expect(serviceMock.activateVC).toHaveBeenCalledWith(vcId);
+      expect(serviceMock.updateVcStatus).toHaveBeenCalledWith(
+        documentId,
+        status,
+      );
       expect(loggerMock.debug).toHaveBeenCalledWith(
-        `Received request to activate VC: ${vcId}`,
+        `Received request to update VC status: ${documentId} -> ${status}`,
       );
     });
 
-    it('should handle errors when activating VC', async () => {
-      const vcId = 'vc1';
+    it('should throw BadRequestException when documentId is not provided', async () => {
+      await expect(
+        controller.updateVcStatus({
+          documentId: '',
+          status: VCStatus.Completed,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should handle errors when updating VC status', async () => {
+      const documentId = 'vc1';
+      const status = VCStatus.Completed;
       const error = new Error('Service error');
 
-      serviceMock.activateVC.mockRejectedValue(error);
+      serviceMock.updateVcStatus.mockRejectedValue(error);
 
-      await expect(controller.activateVC(vcId)).rejects.toThrow(error);
-
-      expect(loggerMock.error).toHaveBeenCalledWith(
-        `Failed to activate VC: ${error.message}`,
-        error.stack,
-      );
-    });
-  });
-
-  describe('revokeVC', () => {
-    it('should revoke VC successfully', async () => {
-      const vcId = 'vc1';
-
-      serviceMock.revokeVC.mockResolvedValue(undefined);
-
-      await controller.revokeVC(vcId);
-
-      expect(serviceMock.revokeVC).toHaveBeenCalledWith(vcId);
-      expect(loggerMock.debug).toHaveBeenCalledWith(
-        `Received request to revoke VC: ${vcId}`,
-      );
-    });
-
-    it('should handle errors when revoking VC', async () => {
-      const vcId = 'vc1';
-      const error = new Error('Service error');
-
-      serviceMock.revokeVC.mockRejectedValue(error);
-
-      await expect(controller.revokeVC(vcId)).rejects.toThrow(error);
+      await expect(
+        controller.updateVcStatus({ documentId, status }),
+      ).rejects.toThrow(error);
 
       expect(loggerMock.error).toHaveBeenCalledWith(
-        `Failed to revoke VC: ${error.message}`,
+        `Failed to update VC status: ${error.message}`,
         error.stack,
       );
     });

@@ -13,9 +13,9 @@ describe('IntegrationE2E', () => {
   const TEST_USERS = {
     A: {
       id: 'user-a-123',
-      email: 'user-a@example.com',
-      family_name: '山田',
-      first_name: '一郎',
+      email: 'sscr0827@gmail.com',
+      family_name: '杉田',
+      first_name: '真也',
       birth_year: 1980,
       gender: 'male',
       zip: '123-4567',
@@ -701,7 +701,7 @@ describe('IntegrationE2E', () => {
             type: VCType.Partner,
             status: VCStatus.Pending,
             vcData: expect.objectContaining({
-              id: programId,
+              programId: programId,
             }),
           }),
         ]),

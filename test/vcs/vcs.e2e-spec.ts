@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { FirestoreProvider } from '../../src/shared/firestore/firestore.provider';
 import { setupTestApp } from '../setup';
+import { VCStatus, VCType } from '../../src/vcs/dto/vc-data.dto';
 
 describe('VCs (e2e)', () => {
   let app: INestApplication;
@@ -23,11 +24,13 @@ describe('VCs (e2e)', () => {
           {
             id: 'vc1',
             data: () => ({
-              email: 'user@example.com',
-              program_id: 'program1',
-              status: 'pending',
-              createdAt: {
-                toDate: () => new Date(),
+              userEmail: 'user@example.com',
+              type: VCType.User,
+              status: VCStatus.Pending,
+              vcData: {
+                onpakuUserId: 'user1',
+                familyName: '山田',
+                firstName: '太郎',
               },
               issuedAt: {
                 toDate: () => new Date(),
@@ -38,8 +41,27 @@ describe('VCs (e2e)', () => {
       }),
     };
 
+    // ユーザー情報のモックを追加
+    const mockUserDoc = {
+      exists: true,
+      data: () => ({
+        onpakuUserId: 'user1',
+        familyName: '山田',
+        firstName: '太郎',
+      }),
+    };
+
     const mockFirestore = {
-      collection: jest.fn().mockReturnValue(mockCollection),
+      collection: jest.fn().mockImplementation((collectionName) => {
+        if (collectionName === 'users') {
+          return {
+            doc: jest.fn().mockReturnValue({
+              get: jest.fn().mockResolvedValue(mockUserDoc),
+            }),
+          };
+        }
+        return mockCollection;
+      }),
     };
 
     firestoreMock = {
@@ -75,9 +97,16 @@ describe('VCs (e2e)', () => {
           expect(res.body).toEqual(
             expect.arrayContaining([
               expect.objectContaining({
+                documentId: 'vc1',
                 email: 'user@example.com',
-                program_id: 'program1',
-                status: 'pending',
+                type: 'user',
+                status: VCStatus.Pending,
+                vcData: expect.objectContaining({
+                  type: 'OnpakuUser',
+                  onpakuUserId: 'user1',
+                  familyName: '山田',
+                  firstName: '太郎',
+                }),
               }),
             ]),
           );
@@ -108,43 +137,42 @@ describe('VCs (e2e)', () => {
     });
   });
 
-  describe('PATCH /api/v1/onpaku/vcs/activate', () => {
-    it('should activate VC successfully', () => {
-      const vcId = 'vc1';
+  describe('PATCH /api/v1/onpaku/vcs/status', () => {
+    it('should update VC status successfully', () => {
+      const documentId = 'vc1';
+      const status = VCStatus.Completed;
 
       return request(app.getHttpServer())
-        .patch('/api/v1/onpaku/vcs/activate')
+        .patch('/api/v1/onpaku/vcs/status')
         .set('Authorization', `Bearer ${process.env.API_KEY}`)
-        .send({ vcId })
+        .send({ documentId, status })
         .expect(200);
     });
 
-    it('should return 400 when vcId is missing', () => {
+    it('should return 400 when documentId is missing', () => {
       return request(app.getHttpServer())
-        .patch('/api/v1/onpaku/vcs/activate')
+        .patch('/api/v1/onpaku/vcs/status')
         .set('Authorization', `Bearer ${process.env.API_KEY}`)
-        .send({})
+        .send({ status: VCStatus.Completed })
         .expect(400);
     });
-  });
 
-  describe('PATCH /api/v1/onpaku/vcs/revoke', () => {
-    it('should revoke VC successfully', () => {
-      const vcId = 'vc1';
-
+    it('should return 400 when status is invalid', () => {
       return request(app.getHttpServer())
-        .patch('/api/v1/onpaku/vcs/revoke')
+        .patch('/api/v1/onpaku/vcs/status')
         .set('Authorization', `Bearer ${process.env.API_KEY}`)
-        .send({ vcId })
-        .expect(200);
+        .send({ documentId: 'vc1', status: 'invalid_status' })
+        .expect(400);
     });
 
-    it('should return 400 when vcId is missing', () => {
+    it('should handle Firestore errors', () => {
+      mockCollection.update.mockRejectedValueOnce(new Error('Firestore error'));
+
       return request(app.getHttpServer())
-        .patch('/api/v1/onpaku/vcs/revoke')
+        .patch('/api/v1/onpaku/vcs/status')
         .set('Authorization', `Bearer ${process.env.API_KEY}`)
-        .send({})
-        .expect(400);
+        .send({ documentId: 'vc1', status: VCStatus.Completed })
+        .expect(500);
     });
   });
 });

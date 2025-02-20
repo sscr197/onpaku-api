@@ -16,8 +16,9 @@ export enum VCType {
 
 export enum VCStatus {
   Pending = 'pending',
-  Active = 'active',
-  Revoked = 'revoked',
+  Completed = 'completed',
+  Failed = 'failed',
+  InProgress = 'in-progress',
 }
 
 export class VCDataDto {
@@ -63,7 +64,7 @@ export class VCDataDto {
 
   @ApiProperty({
     description:
-      'VCのステータス（pending: 発行済み未有効化, active: 有効, revoked: 無効化済み）',
+      'VCのステータス（pending: 発行済み未有効化, completed: 完了, failed: 失敗, in-progress: vc発行中）',
     enum: VCStatus,
     example: VCStatus.Pending,
     required: true,
